@@ -9,7 +9,7 @@ human-facing summary.
 | Component | Source | Version / pin | License | How consumed | Attribution required | Redistributed here? |
 |---|---|---|---|---|---|---|
 | Sparsh (tactile SSL encoder) | github.com/facebookresearch/sparsh | submodule pinned to `fee6a05a97330eca014b59c71ac41596fe3974a7` (branch `main`) | CC-BY-NC 4.0 (repo + weights); some source files carry per-file Apache-2.0 Meta headers | Git submodule (user clones separately); provides `tactile_ssl` ViT encoder + pretrained weights | Yes — attribute Meta / Sparsh; preserve CC-BY-NC 4.0; NonCommercial gate applies to Sparsh code + weights | No |
-| Discrete Elastic Rods (DER) formulation | Bergou et al., "Discrete elastic rods," ACM TOG 27(3), 2008, doi:10.1145/1360612.1360662 | Formulation (paper) | N/A (published mathematical formulation; not code) | Independent reimplementation in `src/simplepredict/loss/der.py` and `bending_energy.py` | Yes — cite Bergou et al. 2008 | Reimplemented (first-party), not copied |
+| Discrete Elastic Rods (DER) formulation | Bergou et al., "Discrete elastic rods," ACM TOG 27(3), 2008, doi:10.1145/1360612.1360662 | Formulation (paper) | N/A (published mathematical formulation; not code) | Independent reimplementation in `src/dlofeel_state/losses/der.py` and `bending.py` | Yes — cite Bergou et al. 2008 | Reimplemented (first-party), not copied |
 | DEFORM (reference implementation) | github.com/roahmlab/DEFORM (Chen et al., CoRL 2024, arXiv:2406.05931) | main (clone date 2024-11; DEFORM_func.py referenced) | NONE — no LICENSE file (all rights reserved) | NOT a dependency and NOT copied; guided the structure of the first-party DER reimplementation; DEFORM's Theseus twist optimizer is intentionally omitted | Courtesy credit as prior art | No |
 | torchcurves | github.com/alexshtf/torchcurves (PyPI: torchcurves) | `torchcurves>=0.2.1` | Apache-2.0 | PyPI dependency (runtime) | No obligation beyond dependency declaration (Apache-2.0, not redistributed) | No |
 
@@ -52,7 +52,7 @@ human-facing summary.
   loudly if it is missed.
 
 ### DER / DEFORM (IP gray area to flag)
-- `src/simplepredict/loss/der.py` and `bending_energy.py` are first-party code
+- `src/dlofeel_state/losses/der.py` and `bending.py` are first-party code
   with no license header. They implement the published Bergou et al. 2008 DER
   formulation. Their structure clearly parallels roahmlab/DEFORM's
   implementation (same discrete curvature-binormal "eq 1" construction, the same
