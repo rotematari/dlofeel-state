@@ -1,0 +1,25 @@
+# Example draccus override for the `dlofeel-eval` console script, wired to the
+# committed parity fixture (k16 architecture).
+#
+# Usage, from the repo root:
+#   dlofeel-eval --config_path configs/eval/k16.yaml --ckpt_path /path/to/k16/best.pt
+#
+# `--config_path` is draccus's built-in YAML-override loader: it fills EvalConfig
+# fields from this file. Any field can still be overridden on the command line,
+# and the CLI value wins. The k16 checkpoint (`best.pt`, ~137 MB) is NOT committed,
+# so point `--ckpt_path` at your local copy (the `ckpt_path` below is only an
+# example original-repo-relative path).
+#
+# Every path below points at the self-contained parity fixture under `tests/`, so
+# running this with the original k16 `best.pt` reproduces `golden_preds.h5`.
+# `model_config_path` is the model-architecture YAML (the big `model_params` dict);
+# it is a separate field from draccus's `--config_path` override loader above.
+
+data_root: tests/fixtures/parity/samples
+blank_ref_root: tests/fixtures/parity/blank_refs
+model_config_path: tests/fixtures/parity/config.yaml
+norm_stats_path: tests/fixtures/parity/norm_stats.yaml
+ckpt_path: results/ral_bigrun/k_resample_ablation/k16/best_runs/k16/best.pt
+out_dir: results_eval
+batch_size: 8
+low_rmse_threshold: 0.055

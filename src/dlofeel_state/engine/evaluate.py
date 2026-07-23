@@ -1,13 +1,14 @@
 # evaluate.py
-import argparse
 import json
 from pathlib import Path
+import draccus
 import h5py
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import plotly.graph_objects as go
 
+from dlofeel_state.configs.eval import EvalConfig
 from dlofeel_state.data.dataset import DLOH5SampleDataset
 from dlofeel_state.models.dlo_state_model import DLOStateModel
 from dlofeel_state.losses.chamfer import mean_point_distance_per_sample, chamfer_distance_per_sample
@@ -247,50 +248,54 @@ def evaluate(data_root, config:dict, ckpt_path, out_dir="results_eval",
     print(f"{len(low_rmse_samples)}/{len(eval_paths)} samples below RMSE "
           f"{low_rmse_threshold}; logged to {out_dir / 'low_rmse_samples.json'}")
 
-if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    CKPT_PATH = "results/ral_bigrun/k_resample_ablation/k16/best_runs/k16/best.pt"
-    p.add_argument("--data_root", type=str, default="src/datasets/c1/ds/test",
-                help="Directory containing sample*.h5")
-    p.add_argument("--ckpt", type=str, 
-    default=CKPT_PATH, help="Path to model checkpoint .pt file")
-    p.add_argument("--out_dir", default="results_eval")
-    p.add_argument("--blank_ref_root", type=str,
-                   default="src/datasets/ds/digit_blank_closed_refs",
-                   help="Path to digit blank reference images directory")
-    p.add_argument("--batch_size", type=int, default=None,
-                   help="Eval batch size; defaults to the checkpoint config's "
-                        "batch_size. Use 1 to print each sample's path.")
-    p.add_argument("--low_rmse_threshold", type=float, default=0.055,
-                   help="Log samples with per-sample RMSE (m) below this to "
-                        "low_rmse_samples.json in the out_dir")
-    args = p.parse_args()
+@draccus.wrap()
+def main(cfg: EvalConfig):
+    """draccus entrypoint for the ``dlofeel-eval`` console script.
 
-    # Try to load config from checkpoint folder
-    ckpt_dir = Path(args.ckpt).parent
-    config_path = ckpt_dir / "config.yaml"
-    
+    Resolves the model-architecture config YAML, applies the run-level overrides
+    from ``cfg``, and hands off to the parity-locked ``evaluate()``. The typed
+    ``EvalConfig`` carries only run knobs; the model config stays as YAML (loaded
+    from ``config_path`` or the checkpoint folder), the standard draccus split.
+    """
+    # Load the model config: explicit --model_config_path, else <ckpt_dir>/config.yaml,
+    # mirroring the original evaluate.py __main__ auto-load + default fallback.
+    if cfg.model_config_path is not None:
+        config_path = Path(cfg.model_config_path)
+    else:
+        config_path = Path(cfg.ckpt_path).parent / "config.yaml"
+
     if config_path.exists():
         print(f"Loading config from: {config_path}")
         config = load_config(str(config_path))
     else:
-        # Fallback: load default config (for older checkpoints without config.yaml)
+        # Fallback: default config (for older checkpoints without config.yaml).
         print(f"Config not found at {config_path}, using default config")
         config = load_config("src/dlofeel_state/configs/default.yaml")
-    
-    # Override data paths for evaluation
-    config["data_root"] = args.data_root
-    config["blank_ref_root"] = args.blank_ref_root
-    
+
+    # Override data paths for evaluation (as the original __main__ did).
+    config["data_root"] = cfg.data_root
+    config["blank_ref_root"] = cfg.blank_ref_root
+    if cfg.norm_stats_path is not None:
+        config["norm_stats_path"] = cfg.norm_stats_path
+
+    # Eval loads a FULL checkpoint (strict state_dict load), so the Sparsh DINO
+    # pretrained file is never needed and is not shipped in this repo.
+    config["model_params"]["image_backbone"]["pretrained_weights_path"] = ""
+
+    ckpt_dir = Path(cfg.ckpt_path).parent
     print(f"Evaluating experiment: {ckpt_dir.name}")
     print(f"Config: img_size={config.get('img_size_H')}x{config.get('img_size_W')}, "
           f"num_output_pts={config.get('num_output_pts')}, normalize={config.get('normalize')}")
-    
+
     evaluate(
-        data_root=args.data_root,
-        ckpt_path=args.ckpt,
+        data_root=cfg.data_root,
         config=config,
-        out_dir=args.out_dir,
-        batch_size=args.batch_size,
-        low_rmse_threshold=args.low_rmse_threshold,
+        ckpt_path=cfg.ckpt_path,
+        out_dir=cfg.out_dir,
+        batch_size=cfg.batch_size,
+        low_rmse_threshold=cfg.low_rmse_threshold,
     )
+
+
+if __name__ == "__main__":
+    main()

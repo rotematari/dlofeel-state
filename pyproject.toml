@@ -32,6 +32,9 @@ dependencies = [
     "wandb>=0.23.0",
 ]
 
+[project.scripts]
+dlofeel-eval = "dlofeel_state.engine.evaluate:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8",
