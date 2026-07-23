@@ -1,0 +1,48 @@
+dlofeel-state
+=============
+
+This repository's own source code (everything except the vendored/submoduled
+third-party trees noted below) is licensed under the MIT License. See LICENSE.
+
+This product includes third-party components under their own terms, summarized
+below. The authoritative, per-component provenance table is docs/THIRD_PARTY.md.
+
+
+Sparsh (Meta AI) — CC-BY-NC 4.0, consumed as a git submodule
+------------------------------------------------------------
+The tactile self-supervised encoder used by this project is Sparsh, from
+facebookresearch/sparsh, licensed under Creative Commons Attribution-
+NonCommercial 4.0 International (CC-BY-NC 4.0). Sparsh is NOT redistributed in
+this repository. It is referenced as a git submodule pinned to upstream commit
+fee6a05a97330eca014b59c71ac41596fe3974a7 (branch main), which the user clones
+separately. Because Sparsh is licensed NonCommercial, any commercial use of the
+Sparsh code or its pretrained weights remains gated by Meta's terms; this MIT
+grant covers only this repository's own code and does not relax Sparsh's terms.
+Note that individual Sparsh source files (for example the vision_transformer.py
+adapted from DINO/DINOv2/timm) carry per-file "Copyright (c) Meta Platforms,
+Inc." Apache-2.0 headers, while the repository as a whole and its weights are
+governed by the root CC-BY-NC 4.0 LICENSE.
+
+
+Discrete Elastic Rods (DER) — formulation attribution
+-----------------------------------------------------
+The elastic-rod losses in src/simplepredict/loss/ (der.py, bending_energy.py)
+implement the Discrete Elastic Rods formulation of Bergou, Wardetzky, Robinson,
+Audoly, and Grinspun, "Discrete elastic rods," ACM Transactions on Graphics
+27(3), 2008 (doi:10.1145/1360612.1360662). This is an independent
+reimplementation of that published formulation. Its structure was informed by
+the reference implementation in roahmlab/DEFORM (Chen et al., "Differentiable
+Discrete Elastic Rods for Real-Time Modeling of Deformable Linear Objects,"
+CoRL 2024, arXiv:2406.05931); the Theseus-based twist optimizer from DEFORM is
+deliberately NOT reproduced here (the twist angle is set to zero). roahmlab/
+DEFORM publishes no license, so no DEFORM code is copied or redistributed; it is
+credited here only as prior art that guided this independent implementation.
+
+
+torchcurves — Apache-2.0, pip dependency
+----------------------------------------
+Differentiable B-spline curve fitting uses torchcurves (alexshtf/torchcurves),
+licensed Apache-2.0, consumed as an ordinary PyPI dependency (torchcurves>=0.2.1)
+and not redistributed in this repository. Apache-2.0 is compatible with MIT and
+imposes no additional obligation on this repository beyond those already met by
+declaring it as a dependency.

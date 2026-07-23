@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+*.h5
+*.db
+*.pkl
+*.pt
+*.mcap
+
+# Keep test fixtures (parity checkpoints/tensors) even though *.pt / *.h5 are ignored
+!tests/fixtures/**
+
+# Virtual environments
+.venv/
+
+# Run outputs
+results/
+results_eval/
+wandb/
+log/
+
+# Tool caches
+.ruff_cache/
+.pytest_cache/
+
+# VS Code
+# .vscode/
+*.vc.db-shm

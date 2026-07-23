@@ -1,0 +1,10 @@
+# Run `pre-commit autoupdate` to bump the pinned rev to the latest ruff release.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      # Linter (with autofix); target-version is read from pyproject.toml [tool.ruff].
+      - id: ruff
+        args: [--fix]
+      # Formatter.
+      - id: ruff-format
