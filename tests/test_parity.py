@@ -47,6 +47,21 @@ def test_parity_matches_golden(tmp_path):
     config["norm_stats_path"] = os.path.join(FIX, "norm_stats.yaml")
     config["blank_ref_root"] = os.path.join(FIX, "blank_refs")
 
+    # Blank the Sparsh DINO pretrained path: it points at a file the new repo does
+    # not ship, and best.pt supplies every ViT weight via the strict load, so the
+    # final model is identical. pos_embed_fn is 'learned' in the k16 config, so no
+    # checkpoint inference is needed either.
+    config["model_params"]["image_backbone"]["pretrained_weights_path"] = ""
+
+    # Pin full FP32 to match the golden's numerical regime. The golden was generated
+    # under torch 2.10.0+cu128; this venv is torch 2.13.0+cu130, whose default enables
+    # cuDNN TF32 for convolutions (the Sparsh ViT patch-embed conv), perturbing preds
+    # by ~4e-5. Disabling TF32 reproduces the golden to ~3e-8 -- an apples-to-apples
+    # comparison across the toolchain drift, NOT a relaxation of the 1e-5 tolerance.
+    import torch
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
+
     evaluate(
         data_root=os.path.join(FIX, "samples"),
         config=config,
