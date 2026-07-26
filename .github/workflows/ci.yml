@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# One live run per branch or pull request: the install step pulls torch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # The runner has no GPU and the default CUDA wheels of torch cost several GB of
+      # disk. uv releases that do not know this variable fall back to those wheels,
+      # which is slower but still correct.
+      UV_TORCH_BACKEND: cpu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive # Sparsh is consumed as a submodule
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12" # pyproject requires >= 3.12
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+
+      - name: Install the package and the dev tooling
+        # The first three commands are CONTRIBUTING.md section 1. The fourth pins the
+        # linter: the per-file-ignores baseline in pyproject.toml is calibrated against
+        # ruff 0.16.0, and a newer release that reports a code the baseline does not
+        # list would turn the lint step red on a repository nobody changed. Bump this
+        # together with the rev in .pre-commit-config.yaml and the baseline itself.
+        run: |
+          uv venv
+          uv pip install -e .
+          uv pip install --group dev
+          uv pip install "ruff==0.16.0"
+
+      - name: Put the venv on PATH
+        # So the two steps below run the commands CONTRIBUTING.md documents, verbatim.
+        run: echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Lint
+        run: ruff check src scripts experiments tests
+
+      # No checkpoint and no dataset are available in CI, so the three
+      # checkpoint-gated tests (parity, eval-CLI, model-load) skip by design, as does
+      # the Sparsh pos-encoding comparison, which needs the frozen research tree that
+      # only exists on the author's machine. Everything else -- losses parity, the
+      # dataset smoke on the committed fixture, the Sparsh import, the train and viz
+      # smokes, the experiment dry-runs, doc hygiene -- runs for real: 34 passed,
+      # 4 skipped.
+      - name: Test
+        run: pytest -v
