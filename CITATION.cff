@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below."
+title: "DLOFeel-State: physics-informed tactile-based shape estimation of deformable linear objects"
+abstract: >-
+  Tactile-primary global shape estimation for deformable linear objects (DLOs).
+  A physics-informed vision-transformer framework maps four DIGIT tactile images
+  and the 7-D end-effector pose to a 3-D vertex chain, without visual input.
+type: software
+license: MIT
+repository-code: "https://github.com/rotematari/dlofeel-state"
+keywords:
+  - deformable linear objects
+  - tactile sensing
+  - shape estimation
+  - robotic manipulation
+  - physics-informed learning
+authors:
+  - given-names: Rotem
+    family-names: Atari
+  - given-names: Stav
+    family-names: Ashur
+  - given-names: Avishai
+    family-names: Sintov
+preferred-citation:
+  type: article
+  title: "Physics-Informed Tactile-based Shape Estimation of Deformable Linear Objects"
+  status: submitted
+  # No journal / DOI / year until the paper is accepted (release decision 2026-07-26).
+  authors:
+    - given-names: Rotem
+      family-names: Atari
+    - given-names: Stav
+      family-names: Ashur
+    - given-names: Avishai
+      family-names: Sintov

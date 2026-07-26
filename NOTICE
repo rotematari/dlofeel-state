@@ -13,7 +13,8 @@ Sparsh (Meta AI) — CC-BY-NC 4.0, consumed as a git submodule
 The tactile self-supervised encoder used by this project is Sparsh, from
 facebookresearch/sparsh, licensed under Creative Commons Attribution-
 NonCommercial 4.0 International (CC-BY-NC 4.0). Sparsh is NOT redistributed in
-this repository. It is referenced as a git submodule pinned to upstream commit
+this repository, apart from the one Apache-2.0 excerpt recorded two paragraphs
+below. It is referenced as a git submodule pinned to upstream commit
 fee6a05a97330eca014b59c71ac41596fe3974a7 (branch main), which the user clones
 separately. Because Sparsh is licensed NonCommercial, any commercial use of the
 Sparsh code or its pretrained weights remains gated by Meta's terms; this MIT
@@ -22,6 +23,20 @@ Note that individual Sparsh source files (for example the vision_transformer.py
 adapted from DINO/DINOv2/timm) carry per-file "Copyright (c) Meta Platforms,
 Inc." Apache-2.0 headers, while the repository as a whole and its weights are
 governed by the root CC-BY-NC 4.0 LICENSE.
+
+One such Apache-2.0 file is reproduced in part here. The file
+src/dlofeel_state/models/backbones/_sparsh_import.py contains roughly 50 lines
+derived from the interpolate_pos_encoding method of Sparsh's
+tactile_ssl/model/vision_transformer.py, whose per-file header reads
+"Copyright (c) Meta Platforms, Inc. and affiliates. / This source code is
+licensed under the Apache License, Version 2.0" (note that upstream's root
+licence file, which that header points to, is in fact the CC-BY-NC 4.0
+LICENSE.md; the per-file Apache-2.0 grant is the more specific and more
+permissive of the two). Those lines are therefore reproduced under Apache-2.0
+with attribution to Meta Platforms, Inc. They are reproduced rather than called
+because the released checkpoint was trained against a locally modified copy of
+that method, and monkeypatching the vendored version back over the pinned
+submodule is what preserves numerical parity with the released weights.
 
 
 Discrete Elastic Rods (DER) — formulation attribution
@@ -33,10 +48,23 @@ Audoly, and Grinspun, "Discrete elastic rods," ACM Transactions on Graphics
 reimplementation of that published formulation. Its structure was informed by
 the reference implementation in roahmlab/DEFORM (Chen et al., "Differentiable
 Discrete Elastic Rods for Real-Time Modeling of Deformable Linear Objects,"
-CoRL 2024, arXiv:2406.05931); the Theseus-based twist optimizer from DEFORM is
-deliberately NOT reproduced here (the twist angle is set to zero). roahmlab/
-DEFORM publishes no license, so no DEFORM code is copied or redistributed; it is
-credited here only as prior art that guided this independent implementation.
+CoRL 2024, arXiv:2406.05931).
+
+The Theseus-based nonlinear twist solver from DEFORM is deliberately NOT
+reproduced here, and this repository has no theseus dependency. In its place,
+losses/der.py provides a self-contained twist entry point,
+optimize_twist_angle(), which performs no solve: it returns a zero twist angle
+(twist-free rod). It is called only from pipeline_points_to_material_frame() in
+the same file, which in turn is reached only from the optional bending-energy
+path in losses/bending.py (and from each file's own __main__ demo block). The
+shipped training loss, losses/weighted.py::WeightedLoss, never enters that path:
+it imports only compute_edges, compute_edge_lengths, and
+compute_curvature_binormal from losses/der.py, so no twist or material-frame
+code participates in the released training or evaluation objective.
+
+roahmlab/DEFORM publishes no license, so no DEFORM code is copied or
+redistributed; it is credited here only as prior art that guided this
+independent implementation.
 
 
 torchcurves — Apache-2.0, pip dependency

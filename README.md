@@ -142,7 +142,7 @@ If you use this code, please cite the paper:
 > Physics-Informed Tactile-based Shape Estimation of Deformable Linear Objects.
 
 The paper is under review; the full reference (venue, DOI) will be added here on
-acceptance. Machine-readable metadata: `CITATION.cff`.
+acceptance. Machine-readable metadata: [`CITATION.cff`](CITATION.cff).
 
 ## License
 

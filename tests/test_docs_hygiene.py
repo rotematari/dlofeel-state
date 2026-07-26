@@ -70,3 +70,34 @@ def test_readme_covers_release_essentials():
     ]
     missing = [r for r in required if r not in text]
     assert not missing, f"README missing required content: {missing}"
+
+
+def test_citation_is_parseable_with_correct_authors_and_no_venue_claim():
+    """CITATION.cff must be valid CFF with the exact paper title and author list.
+
+    The paper is under review, so the file must NOT claim a venue or DOI.
+    """
+    import yaml
+    cff = yaml.safe_load((REPO / "CITATION.cff").read_text(encoding="utf-8"))
+    assert cff["cff-version"] == "1.2.0"
+    assert cff["preferred-citation"]["title"] == (
+        "Physics-Informed Tactile-based Shape Estimation of Deformable Linear Objects"
+    )
+    # No premature publication claims while the paper is under review.
+    for banned in ("doi", "journal", "year"):
+        assert banned not in cff["preferred-citation"], (
+            f"'{banned}' must not appear until the paper is accepted"
+        )
+    expected = [
+        ("Rotem", "Atari"),
+        ("Stav", "Ashur"),
+        ("Avishai", "Sintov"),
+    ]
+    for key in ("authors",):
+        got = [(a["given-names"], a["family-names"]) for a in cff[key]]
+        assert got == expected, f"{key} mismatch: {got}"
+    got_paper = [
+        (a["given-names"], a["family-names"])
+        for a in cff["preferred-citation"]["authors"]
+    ]
+    assert got_paper == expected, f"preferred-citation authors mismatch: {got_paper}"
