@@ -9,6 +9,7 @@ dependencies = [
     "einops>=0.8.1",
     "gdown>=6.1.0",
     "h5py>=3.14.0",
+    "huggingface-hub>=0.35.0",
     "ikpy>=4.0.0",
     "imageio>=2.37.2",
     "lightning>=2.6.1",

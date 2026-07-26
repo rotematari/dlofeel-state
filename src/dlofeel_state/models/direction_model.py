@@ -95,7 +95,7 @@ class DirectionExtractor(nn.Module):
     Non-differentiable module that extracts DLO direction vectors from
     tactile diff images using classical CV (threshold + line fitting).
 
-    Delegates to ``get_line_params_from_diff`` from digit_db_to_lines.py
+    Delegates to ``get_line_params_from_diff`` from direction_lines.py
     so the CV pipeline is identical to the offline processor.
 
     No normalization is applied — the original pipeline works on raw pixel
