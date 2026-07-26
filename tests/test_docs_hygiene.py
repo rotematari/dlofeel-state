@@ -18,8 +18,16 @@ BANNED = ["simplepredict", "notion.so", "/home/rotem", "/media/rotem"]
 
 
 def _shipped_docs():
-    """README + every markdown file under docs/, minus exemptions."""
-    files = [REPO / "README.md", *sorted((REPO / "docs").rglob("*.md"))]
+    """README + every markdown file under docs/ and experiments/, minus exemptions.
+
+    ``experiments/**/*.md`` are the per-artifact ablation specs that ship with the
+    drivers, so they are held to the same banned-string and link invariants.
+    """
+    files = [
+        REPO / "README.md",
+        *sorted((REPO / "docs").rglob("*.md")),
+        *sorted((REPO / "experiments").rglob("*.md")),
+    ]
     for extra in ("CITATION.cff", "CONTRIBUTING.md"):
         p = REPO / extra
         if p.exists():

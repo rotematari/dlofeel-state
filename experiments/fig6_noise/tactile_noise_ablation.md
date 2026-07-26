@@ -61,7 +61,7 @@ uv run python experiments/fig6_noise/eval_tactile_noise.py --selftest
 # full 11-level sweep (needs FAST_DATA + a C1 best.pt)
 uv run python experiments/fig6_noise/eval_tactile_noise.py \
   --data_root      src/datasets/c1/ds/test \
-  --blank_ref_root src/datasets/c1/ds/digit_blank_closed_refs \
+  --blank_ref_root src/datasets/ds/digit_blank_closed_refs \
   --ckpt           <path-to-C1-best-checkpoint>/best.pt \
   --out_dir        results/tactile_noise_ablation
 # the C1 best checkpoint is provided by Rotem (not git-tracked).

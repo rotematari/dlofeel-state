@@ -11,8 +11,8 @@
 # Usage (cwd does not matter; the script cd's to the repo root):
 #   bash experiments/fig5_transfer/run_c3_xblock.sh [--dry-run]
 #
-# Prereqs (all already present): the k16 best.pt, norm_stats_k16{,_c3}.yaml,
-# c3/ds/{train,test}, the Sparsh backbone, a GPU. Each run writes the detailed
+# Prereqs: the k16 best.pt, norm_stats_k16{,_c3}.yaml, c3/ds/{train,test} staged
+# per docs/DATA.md, the Sparsh backbone, a GPU. Each run writes the detailed
 # run_metrics.json (per-epoch x per-session) under its out_dir/checkpoints/<exp>/.
 # Continue-on-error: every run is attempted; a PASS/FAIL summary prints at the end.
 

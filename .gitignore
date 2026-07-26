@@ -32,6 +32,9 @@ log/
 .ruff_cache/
 .pytest_cache/
 
+# Local agent/assistant workspace
+.claude/
+
 # VS Code
 # .vscode/
 *.vc.db-shm

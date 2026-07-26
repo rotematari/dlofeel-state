@@ -108,6 +108,28 @@ Nothing in this repository requires the download. The parity gate and the
 dataset smoke test run off the committed 8-frame sample (section 7), and the
 checkpoint-dependent tests skip cleanly when no checkpoint is present.
 
+### The Sparsh pretrained backbone (training from scratch only)
+
+`--what weights` fetches **this project's** trained checkpoints. It does *not*
+fetch the pretrained Sparsh tactile encoder, which is a separate work by Meta AI
+and is not redistributed here (CC-BY-NC 4.0; see
+[`THIRD_PARTY.md`](THIRD_PARTY.md)). Obtain `dino_vitsmall.ckpt` from the
+upstream Sparsh project (the `third_party/sparsh` submodule; see its README and
+the Sparsh model release) and place it at:
+
+```
+third_party/sparsh/checkpoints/dino_vitsmall.ckpt
+```
+
+That is the path
+[`src/dlofeel_state/configs/default.yaml`](../src/dlofeel_state/configs/default.yaml)
+expects under `model_params.image_backbone.pretrained_weights_path`.
+
+You need it **only to train from scratch**. Evaluation does not: a released
+checkpoint already carries the full fine-tuned backbone weights, and
+`dlofeel-eval` blanks `pretrained_weights_path` before building the model, so
+`dlofeel-eval` and the parity gate run with no Sparsh checkpoint present.
+
 ---
 
 ## 4. Staging layout

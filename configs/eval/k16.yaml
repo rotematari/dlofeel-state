@@ -19,7 +19,7 @@ data_root: tests/fixtures/parity/samples
 blank_ref_root: tests/fixtures/parity/blank_refs
 model_config_path: tests/fixtures/parity/config.yaml
 norm_stats_path: tests/fixtures/parity/norm_stats.yaml
-ckpt_path: results/ral_bigrun/k_resample_ablation/k16/best_runs/k16/best.pt
+ckpt_path: results/ral_bigrun/k_resample_ablation/k16/checkpoints/k16/best.pt
 out_dir: results_eval
 batch_size: 8
 low_rmse_threshold: 0.055

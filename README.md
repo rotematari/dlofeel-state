@@ -21,7 +21,12 @@ Released K = 16 model, evaluated on held-out test sessions of the primary cable
 | Per-vertex RMSE | **30.52 ± 15.22 mm** |
 | Chamfer distance | **27.29 ± 12.30 mm** |
 | Inference | 61.5 ms (~16 Hz), RTX 5090 |
-| Parameters | 6.38 M trainable / 24.80 M total |
+| Parameters | 5.33 M trainable / 23.75 M total |
+
+Parameter counts are for the released K = 16 checkpoint: 23,747,607 total tensor
+elements, of which 5,327,367 carry gradients under the default freezing strategy
+(the Sparsh backbone is frozen except its last 2 blocks). The count is K-dependent,
+so a model trained at a different K will differ.
 
 The test split is whole held-out sessions, not a random frame split, so these numbers
 are on unseen cable configurations and trajectories.
@@ -84,14 +89,21 @@ the full flag reference for `dlofeel-train` / `dlofeel-eval` are in
 
 Each directory holds the driver scripts for one paper artifact.
 
-| Paper artifact | Directory |
-|---|---|
-| Table I: model comparison (pose-only, pose+direction, ResNet-18, w/o B-spline, w/o physics loss) | `experiments/table1_model_comparison/` |
-| Table II: sensor removal + runtime sensor faults | `experiments/table2_sensor_ablation/` |
-| Fig. 4: data efficiency vs. number of samples | `experiments/fig4_data_efficiency/` |
-| Fig. 5: transfer to unseen DLOs (4.5 mm USB, 2 mm steel) | `experiments/fig5_transfer/` |
-| Fig. 6: robustness to tactile-image noise | `experiments/fig6_noise/` |
-| Choice of K (vertex resampling) | `experiments/k_resample/` |
+| Paper artifact | Directory | Arms with a shipped driver |
+|---|---|---|
+| Table I: model comparison | `experiments/table1_model_comparison/` | Sparsh ViT, ResNet-18, pose-only (`run_model_comparison.sh`); w/o B-spline (`run_diff_bspline.sh`) |
+| Table II: sensor removal + runtime sensor faults | `experiments/table2_sensor_ablation/` | all |
+| Fig. 4: data efficiency vs. number of samples | `experiments/fig4_data_efficiency/` | all |
+| Fig. 5: transfer to unseen DLOs | `experiments/fig5_transfer/` | `c3` (2 mm steel) scratch + fine-tune (`run_c3_xblock.sh`); combined-model eval (`run_x2_combined_eval.sh`) |
+| Fig. 6: robustness to tactile-image noise | `experiments/fig6_noise/` | all |
+| Choice of K (vertex resampling) | `experiments/k_resample/` | all |
+
+Two Table-I arms are **model-supported but ship no driver**: the pose+direction variant
+(`--model_type direction`) and the w/o-physics-loss variant (`--use_weighted_loss`) are
+implemented in the package and reachable from the CLI, but no shell script in
+`experiments/` launches them. Likewise, Fig. 5 ships the `c3` transfer runs only; the
+`c2` (4.5 mm USB) fine-tuning driver is not included, and `run_x2_combined_eval.sh`
+evaluates a combined C1+C2+C3 checkpoint that no shipped script trains.
 
 The drivers `cd` to the repository root and use repo-root-relative dataset paths; the
 staging layout they expect is in [docs/DATA.md](docs/DATA.md).
@@ -106,6 +118,7 @@ src/dlofeel_state/
 ├── engine/          # train.py, evaluate.py, metrics.py (the console-script entrypoints)
 ├── configs/         # TrainConfig/EvalConfig CLI surfaces, default.yaml, norm stats
 └── viz/             # Dataset and prediction visualisation
+configs/             # Example draccus YAML overrides for the console scripts
 experiments/         # Per-artifact ablation drivers (see the table above)
 scripts/             # Data download, bag processing, dataset packing
 docs/                # Data, model, loss, training, acquisition, third-party docs

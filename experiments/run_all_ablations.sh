@@ -19,7 +19,7 @@
 # Data defaults to src/datasets/c1/ds/test and blank-ref to
 # src/datasets/ds/digit_blank_closed_refs via each harness's own defaults.
 # Prerequisites for a real run: the gitignored c1/ds data, the
-# Sparsh src/sparsh/checkpoints/dino_vitsmall.ckpt, and a GPU.
+# Sparsh third_party/sparsh/checkpoints/dino_vitsmall.ckpt, and a GPU.
 #
 # Continue-on-error: every step runs even if an earlier one fails; a PASS/FAIL summary
 # prints at the end and the script exits non-zero if any step failed. All output is teed

@@ -493,7 +493,7 @@ img_size_H: 320
 img_size_W: 240
 ```
 
-The DINO checkpoint at `pretrained_weights_path` is fetched separately (`scripts/download_data.py --what weights`) and is only needed to train from scratch: evaluating a released checkpoint loads full weights and ignores it.
+The DINO checkpoint at `pretrained_weights_path` is **not** distributed by this project and is not what `scripts/download_data.py --what weights` fetches (that command downloads this project's own trained checkpoints). It is Meta's pretrained Sparsh tactile encoder: obtain it from the upstream Sparsh project (the `third_party/sparsh` submodule; see its README and the Sparsh model release) and place it at `third_party/sparsh/checkpoints/dino_vitsmall.ckpt`, the path the shipped config expects. It is only needed to **train from scratch**: evaluating a released checkpoint loads full weights and blanks this path.
 
 `num_output_pts` / `n_control_points` set \(K\) for the architecture. The released checkpoint and the committed parity fixture use \(K = 16\) (`--num_resample_points 16 --n_control_points 16`), which also requires the matching `norm_stats_k16.yaml`; the YAML default of 32 is the original packing default.
 

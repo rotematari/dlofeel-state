@@ -54,6 +54,9 @@ dropout: 0.1
 epochs: 10
 train_data_root: src/datasets/c1/ds/train
 val_data_root: src/datasets/c1/ds/test
+# Frozen checkpoint provenance: the original-repo path this config was trained under.
+# test_parity.py overrides it to the fixture's own norm_stats.yaml, so the stale value
+# is never resolved. Kept verbatim because this file is part of the frozen fixture.
 norm_stats_path: src/simplepredict/configs/norm_stats_k16.yaml
 seed: 42
 num_workers: 8

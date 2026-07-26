@@ -37,7 +37,7 @@ BLANK=src/datasets/ds/digit_blank_closed_refs
 if [[ "$DRY_RUN" -eq 0 ]]; then
     [[ -f "$X2_CKPT" ]] || { echo "ERROR: X2 combined ckpt not found: $X2_CKPT" >&2; exit 2; }
     for c in c1 c2 c3; do
-        [[ -e "src/datasets/$c/ds/test" ]] || { echo "ERROR: $c test not found (FAST_DATA mounted?)" >&2; exit 2; }
+        [[ -e "src/datasets/$c/ds/test" ]] || { echo "ERROR: $c test not found (is the dataset staged? see docs/DATA.md)" >&2; exit 2; }
     done
 fi
 

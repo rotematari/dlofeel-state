@@ -44,7 +44,7 @@ Success = the drop-trained curve sits well below this at k>=1 while k=0 stays cl
 uv run python experiments/table2_sensor_ablation/train_tactile_drop.py \
   --train_data_root src/datasets/c1/ds/train \
   --val_data_root   src/datasets/c1/ds/test \
-  --blank_ref_root  src/datasets/c1/ds/digit_blank_closed_refs \
+  --blank_ref_root  src/datasets/ds/digit_blank_closed_refs \
   --config_path     src/dlofeel_state/configs/default.yaml \
   --num_resample_points 32 --with_att --normalize --normalize_inputs \
   --use_diff_images --use_blank_ref --single_encoder \

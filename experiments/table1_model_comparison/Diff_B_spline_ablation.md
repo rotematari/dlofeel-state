@@ -2,7 +2,7 @@
 
 > **Status: PLANNED** (spec only, not yet run).
 > Cable: **C1** (1.5 mm braided steel). Main model: `DLOStateModel` (Sparsh ViT).
-> Parent: `[../](../)`. Implemented siblings: `session_scaling/`, `model_comparison/`, `tactile_sensor_ablation/`.
+> Parent: [`../`](../). Siblings: `fig4_data_efficiency/`, `k_resample/`, `table2_sensor_ablation/`.
 
 ## Question
 
@@ -40,7 +40,7 @@ Both are computed at the fixed K=32 used by both arms, so they compare directly 
 
 ## Implementation plan
 
-`model_params.use_spline` already gates the entire B-spline path in `[models/sparsh_enc.py](../../models/sparsh_enc.py)`: the `DifferentiableBSpline` layer (defined ~L469, applied ~L716) is only built and used when `use_spline` is true. **No new model class is needed**, just the flag.
+`model_params.use_spline` already gates the entire B-spline path: the `DifferentiableBSpline` layer, defined in [`src/dlofeel_state/models/bspline.py`](../../src/dlofeel_state/models/bspline.py) and applied in [`src/dlofeel_state/models/dlo_state_model.py`](../../src/dlofeel_state/models/dlo_state_model.py), is only built and used when `use_spline` is true. **No new model class is needed**, just the flag.
 
 The flag is currently config-only (not a `train.py` CLI argument). Decided: expose a `--use_spline / --no-use_spline` override in `train.py` (same pattern as the other config-overriding flags); a two-line `run_diff_bspline.sh` runs both arms.
 
@@ -54,7 +54,7 @@ Reporting `kb_loss` / `length_loss` needs a small change: `WeightedLoss` returns
 uv run dlofeel-train \
   --train_data_root src/datasets/c1/ds/train \
   --val_data_root   src/datasets/c1/ds/test \
-  --blank_ref_root  src/datasets/c1/ds/digit_blank_closed_refs \
+  --blank_ref_root  src/datasets/ds/digit_blank_closed_refs \
   --train_config_path src/dlofeel_state/configs/default.yaml \
   --num_resample_points 32 --with_att --normalize --normalize_inputs \
   --use_diff_images --use_blank_ref --single_encoder \

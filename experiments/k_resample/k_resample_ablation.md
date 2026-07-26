@@ -1,8 +1,8 @@
 # K-Resample Ablation (B-spline output resolution)
 
 > **Status: PLANNED** (spec only, not yet run).
-> Cable: **C1** (1.5 mm braided steel), data at `[src/datasets/c1/ds/](../../../datasets/c1)`. Main model: `DLOStateModel` (Sparsh ViT).
-> Parent: `[../](../)`. Implemented siblings: `session_scaling/`, `model_comparison/`, `tactile_sensor_ablation/`.
+> Cable: **C1** (1.5 mm braided steel), data staged at `src/datasets/c1/ds/` (see [`docs/DATA.md`](../../docs/DATA.md)). Main model: `DLOStateModel` (Sparsh ViT).
+> Parent: [`../`](../). Siblings: `fig4_data_efficiency/`, `table1_model_comparison/`, `table2_sensor_ablation/`.
 
 ## Question
 
@@ -25,7 +25,7 @@ Caveat: absolute L2 is mildly confounded across K because the GT marker count ch
 
 ## Implementation plan
 
-Reuse `train.py` in a five-value loop (a thin `run_k_resample.sh`, same shape as `[../session_scaling/run_session_scaling.sh](../session_scaling/run_session_scaling.sh)`), passing `--num_resample_points <K>` and `--n_control_points <K>` (tied) with a distinct `--out_dir` per K. `n_control_points` is config-only today (no CLI); expose a `--n_control_points` flag mirroring `--num_resample_points`, or write a per-K config. No model or dataset change otherwise.
+Reuse `train.py` in a five-value loop (a thin `run_k_resample.sh`, same shape as [`../fig4_data_efficiency/run_session_scaling.sh`](../fig4_data_efficiency/run_session_scaling.sh)), passing `--num_resample_points <K>` and `--n_control_points <K>` (tied) with a distinct `--out_dir` per K. `n_control_points` is config-only today (no CLI); expose a `--n_control_points` flag mirroring `--num_resample_points`, or write a per-K config. No model or dataset change otherwise.
 
 ## How to run (intended, from the repo root with uv)
 
@@ -35,7 +35,7 @@ for K in 8 16 32 64 128; do
   uv run dlofeel-train \
     --train_data_root src/datasets/c1/ds/train \
     --val_data_root   src/datasets/c1/ds/test \
-    --blank_ref_root  src/datasets/c1/ds/digit_blank_closed_refs \
+    --blank_ref_root  src/datasets/ds/digit_blank_closed_refs \
     --train_config_path src/dlofeel_state/configs/default.yaml \
     --num_resample_points "$K" --n_control_points "$K" --with_att --normalize --normalize_inputs \
     --use_diff_images --use_blank_ref --single_encoder \
