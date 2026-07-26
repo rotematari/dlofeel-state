@@ -658,7 +658,7 @@ def train(
     # Sensor-drop augmentation: wrap ONLY train (val tracks the clean k=0 set).
     # Must come AFTER count_sessions, which reads train_ds.is_packed/.files.
     if drop_augment:
-        from experiments.table2_sensor_ablation.drop_augment import DropAugmentDataset
+        from dlofeel_state.data.augment import DropAugmentDataset
         train_ds = DropAugmentDataset(train_ds)
         config["drop_augment"] = True
         print(f"[drop_augment] expanded train set to {len(train_ds)} samples (15x enumeration).")
