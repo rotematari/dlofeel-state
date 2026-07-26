@@ -34,6 +34,7 @@ dependencies = [
 
 [project.scripts]
 dlofeel-eval = "dlofeel_state.engine.evaluate:main"
+dlofeel-train = "dlofeel_state.engine.train:main"
 
 [dependency-groups]
 dev = [
