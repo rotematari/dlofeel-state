@@ -13,7 +13,6 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-
 # --- Port 1: direction baseline model + CV core -----------------------------
 
 def test_direction_model_constructs_and_runs():

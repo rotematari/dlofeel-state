@@ -39,7 +39,13 @@ dlofeel-train = "dlofeel_state.engine.train:main"
 
 [dependency-groups]
 dev = [
+    # `pre-commit install` (see CONTRIBUTING.md) needs pre-commit in the dev env; the
+    # hooks themselves pull their own pinned ruff, see .pre-commit-config.yaml.
+    "pre-commit>=4",
     "pytest>=8",
+    # The verbatim-port lint baseline in [tool.ruff.lint.per-file-ignores] names rule
+    # codes that ruff < 0.9 rejects as unknown selectors.
+    "ruff>=0.9",
 ]
 
 [build-system]
@@ -58,3 +64,99 @@ testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py312"
+# The Sparsh submodule is vendored third-party source (CC-BY-NC), not ours to lint.
+extend-exclude = ["third_party"]
+
+[tool.ruff.lint]
+# E402 is outside ruff's default rule set, but the ported drivers carry deliberate
+# `# noqa: E402` directives on imports that must follow `matplotlib.use()` or an
+# env-var assignment. Enabling it keeps those directives load-bearing instead of
+# leaving RUF100 to report them as dead.
+extend-select = ["E402"]
+
+[tool.ruff.lint.isort]
+# Keep `X as Y` grouped with the other members of a single import statement, as the
+# tree already writes them; otherwise isort splits such an import into two.
+combine-as-imports = true
+
+[tool.ruff.format]
+# `ruff format .` is clean, and it must stay that way for files written for this
+# release. What it may never touch:
+#   * the ported trees below -- rewriting their whitespace and line breaks would
+#     destroy the line-for-line correspondence with the frozen research codebase that
+#     makes the port auditable (the linter still runs over them, see per-file-ignores);
+#   * the committed test modules that predate the formatter, `tests/test_parity.py`
+#     above all: the parity gate is the reproducibility contract, not a style sample;
+#   * markdown -- the formatter reflows the python snippets in docs/, collapsing
+#     comment alignment that is there for the reader.
+# New .py files, tests included, are formatted normally.
+exclude = [
+    "experiments/**",
+    "scripts/**",
+    "src/dlofeel_state/data/**",
+    "src/dlofeel_state/engine/**",
+    "src/dlofeel_state/losses/**",
+    "src/dlofeel_state/models/**",
+    "src/dlofeel_state/viz/**",
+    "tests/test_docs_hygiene.py",
+    "tests/test_experiments_dryrun.py",
+    "tests/test_experiments_lib.py",
+    "tests/test_losses_parity.py",
+    "tests/test_parity.py",
+    "tests/test_train_smoke.py",
+    "*.md",
+]
+
+# Lint baseline for the verbatim port. Every file below is a port of a module from the
+# frozen research codebase, and its findings are inherited: running ruff over the
+# ORIGINAL sources reports the same codes. The parity gate is the contract these files
+# have to keep, so their style is frozen and each finding is suppressed per file and
+# per rule rather than "fixed". Counts are from ruff 0.16.0 at release-port time.
+# Nothing here applies to new code: files you add get the full rule set.
+# E702 (dataset.py) and E741 (sparsh_backbone.py) are listed for ruff < 0.16, whose
+# narrower default rule set still checked pycodestyle E7; 0.16 does not report them.
+[tool.ruff.lint.per-file-ignores]
+# Ported package modules (src/dlofeel_state/): unused imports/variables, unsorted
+# imports, pre-PEP-585 typing, broad excepts, and unused tuple unpackings, all as
+# written in the original. F821 in transforms.py is a genuine latent bug inherited
+# from the original (`List` used in an annotation that was never imported); it sits on
+# a code path the parity gate does not exercise and is left for a separate fix.
+"src/dlofeel_state/data/dataset.py" = ["BLE001", "E702", "F401", "F841", "I001", "TRY201", "UP006", "UP035"]  # BLE001, E702 x2, F401 x4, F841 x6, I001, TRY201 x2, UP006 x3, UP035 x3
+"src/dlofeel_state/data/spline_utils.py" = ["I001", "RUF059"]  # I001, RUF059 x4
+"src/dlofeel_state/data/transforms.py" = ["F401", "F811", "F821", "F841", "I001", "PLR0402", "RUF059", "UP035"]  # F401 x3, F811 x2, F821, F841, I001, PLR0402, RUF059 x2, UP035
+"src/dlofeel_state/engine/evaluate.py" = ["F401", "F841", "I001"]  # F401 x2, F841 x2, I001
+"src/dlofeel_state/engine/train.py" = ["BLE001", "C401", "DTZ005", "F401", "I001", "PIE790", "PLR2044"]  # BLE001, C401, DTZ005 x2, F401 x2, I001 x2, PIE790, PLR2044
+"src/dlofeel_state/losses/bending.py" = ["RUF059"]  # RUF059 x4
+"src/dlofeel_state/losses/der.py" = ["F841", "RUF059"]  # F841, RUF059 x5
+"src/dlofeel_state/losses/weighted.py" = ["F401", "I001"]  # F401, I001
+"src/dlofeel_state/models/backbones/_sparsh_import.py" = ["PLR0402", "RUF022"]  # PLR0402, RUF022
+"src/dlofeel_state/models/backbones/pose_encoder.py" = ["PLR0402"]  # PLR0402
+"src/dlofeel_state/models/backbones/resnet_backbone.py" = ["PLR0402"]  # PLR0402
+"src/dlofeel_state/models/backbones/sparsh_backbone.py" = ["E741", "F401", "F841", "PLR0402"]  # E741, F401, F841, PLR0402
+"src/dlofeel_state/models/basic.py" = ["F401", "F841", "I001", "PLR0402"]  # F401, F841, I001, PLR0402 x2
+"src/dlofeel_state/models/bspline.py" = ["PLR0402"]  # PLR0402
+"src/dlofeel_state/models/direction_lines.py" = ["RUF059"]  # RUF059
+"src/dlofeel_state/models/direction_model.py" = ["I001", "PLR0402", "RUF059"]  # I001 x2, PLR0402, RUF059 x3
+"src/dlofeel_state/models/dlo_state_model.py" = ["PLR0402"]  # PLR0402
+"src/dlofeel_state/viz/dataset.py" = ["BLE001", "F401", "I001"]  # BLE001, F401, I001
+"src/dlofeel_state/viz/predictions.py" = ["BLE001", "F401", "I001"]  # BLE001 x2, F401, I001
+# Ported data-preparation scripts (scripts/): same inherited style, plus f-strings
+# without placeholders and shebangs on non-executable files (the originals are not
+# executable either; the scripts are run as `python scripts/<name>.py`).
+"scripts/download_data.py" = ["EXE001"]  # EXE001
+"scripts/pack_dataset.py" = ["BLE001", "DTZ005", "F541", "I001", "PLR1722", "RUF015"]  # BLE001, DTZ005, F541 x7, I001 x2, PLR1722, RUF015
+"scripts/process_bags.py" = ["BLE001", "EXE001", "F401", "F541", "I001", "SIM118", "UP006", "UP035", "UP045"]  # BLE001, EXE001, F401, F541, I001, SIM118 x2, UP006 x20, UP035 x3, UP045 x2
+# Ported experiment drivers (experiments/): as above. viz_noise_sweep.py imports after
+# an env-var assignment without a noqa (E402); plot_k_resample.py carries a `# noqa:
+# E402` that ruff 0.16 no longer needs (RUF100) -- both are the original's text.
+"experiments/fig4_data_efficiency/plot_session_scaling_summary.py" = ["EXE001"]  # EXE001
+"experiments/fig4_data_efficiency/train_session_scaling.py" = ["DTZ005", "FURB122", "I001"]  # DTZ005 x2, FURB122, I001 x2
+"experiments/fig5_transfer/build_combined_union.py" = ["EXE001"]  # EXE001
+"experiments/fig6_noise/eval_tactile_noise.py" = ["EXE001"]  # EXE001
+"experiments/fig6_noise/viz_noise_sweep.py" = ["E402", "EXE001", "I001", "RUF059"]  # E402, EXE001, I001, RUF059
+"experiments/k_resample/gen_k_norm_stats.py" = ["EXE001"]  # EXE001
+"experiments/k_resample/plot_k_resample.py" = ["EXE001", "RUF100"]  # EXE001, RUF100
+"experiments/table1_model_comparison/eval_diff_bspline.py" = ["EXE001", "I001"]  # EXE001, I001
+"experiments/table2_sensor_ablation/eval_tactile_drop.py" = ["EXE001", "F401"]  # EXE001, F401
+"experiments/table2_sensor_ablation/tactile_sensor_ablation.py" = ["BLE001", "EXE001"]  # BLE001, EXE001
+"experiments/table2_sensor_ablation/train_tactile_drop.py" = ["EXE001"]  # EXE001

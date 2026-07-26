@@ -82,6 +82,7 @@ def test_driver_help_exits_zero(name: str, relpath: str) -> None:
         capture_output=True,
         text=True,
         timeout=300,
+        check=False,  # the return code is the assertion below, not an exception
     )
 
     if proc.returncode != 0:

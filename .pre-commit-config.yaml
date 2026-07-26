@@ -1,10 +1,13 @@
 # Run `pre-commit autoupdate` to bump the pinned rev to the latest ruff release.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    # Must stay >= v0.9: the verbatim-port lint baseline in pyproject.toml names rule
+    # codes (RUF059) that older ruff releases reject as unknown selectors. v0.16.0 is
+    # the release the baseline was calibrated against.
+    rev: v0.16.0
     hooks:
-      # Linter (with autofix); target-version is read from pyproject.toml [tool.ruff].
-      - id: ruff
+      # Linter (with autofix); rules and ignores are read from pyproject.toml [tool.ruff].
+      - id: ruff-check
         args: [--fix]
       # Formatter.
       - id: ruff-format

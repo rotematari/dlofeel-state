@@ -14,8 +14,8 @@ import torch
 
 def test_sparsh_builders_import():
     from dlofeel_state.models.backbones._sparsh_import import (
-        vit_small,
         VisionTransformer,
+        vit_small,
     )
 
     m = vit_small()
