@@ -8,13 +8,74 @@ default ``src/dlofeel_state/configs/default.yaml``); this dataclass only carries
 run-level overrides that the CLI exposed. draccus's ``main()`` turns these into
 the keyword arguments the ported ``train(...)`` function expects.
 
-Every field has a default, so field order is unconstrained. The tri-state
-booleans (``bool | None``, default ``None``) preserve the original CLI's
-``--flag`` / ``--no-flag`` / omit semantics: ``None`` means "do not override the
-value the YAML config already carries".
+Every field has a default, so field order is unconstrained. Boolean fields are
+declared with ``bool_flag`` and accept three CLI forms -- ``--flag``,
+``--no-flag``, and an explicit ``--flag <bool>`` -- which is what lets the
+tri-state booleans (``bool | None``, default ``None``) keep their omit
+semantics: ``None`` means "do not override the value the YAML config already
+carries".
 """
 
-from dataclasses import dataclass
+import argparse
+from dataclasses import dataclass, field
+from typing import Any
+
+
+class BoolFlagAction(argparse.Action):
+    """Gives a boolean field the ``--flag`` / ``--no-flag`` / ``--flag <bool>`` forms.
+
+    draccus registers exactly one option string per field (``--<name>``) and
+    always with a mandatory value, so a ``bool`` field would otherwise reject
+    both the bare flag and the negated form. This action adds the ``--no-<name>``
+    option string itself and makes the value optional.
+
+    Values reach the namespace as the *strings* draccus expects: it yaml-decodes
+    every namespace value on the way into the dataclass, and an omitted flag is
+    suppressed from the namespace entirely, which is what preserves ``None`` for
+    the tri-state fields.
+
+    ``--help`` renders the optional value against BOTH option strings
+    (``--flag [bool], --no-flag [bool]``): argparse formats one metavar per
+    action, and draccus owns the formatter class, so the negated form cannot be
+    shown separately. Passing a value to ``--no-flag`` raises with the explicit
+    form to use instead.
+    """
+
+    def __init__(self, option_strings: list[str], dest: str, **kwargs: Any):
+        # draccus autogenerates `type` for every field, but this action hands its
+        # values on as raw strings for draccus itself to decode.
+        kwargs.pop("type", None)
+        kwargs.pop("nargs", None)
+        negated = [
+            f"--no-{opt.lstrip('-')}" for opt in option_strings if opt.startswith("--")
+        ]
+        # Bracketed metavar: draccus's formatter short-circuits on an explicit
+        # metavar, so it must carry the "value is optional" marker itself.
+        super().__init__(
+            [*option_strings, *negated], dest, nargs="?", metavar="[bool]", **kwargs
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Record ``"true"``/``"false"`` for a bare flag, else pass the value through."""
+        negated = option_string.startswith("--no-")
+        if values is None:  # bare --flag / --no-flag
+            setattr(namespace, self.dest, "false" if negated else "true")
+        elif negated:
+            raise argparse.ArgumentError(
+                self,
+                f"takes no value; pass --{self.dest} {values} to set it explicitly",
+            )
+        else:
+            setattr(namespace, self.dest, values)
+
+
+def bool_flag(default: bool | None = None) -> Any:
+    """Declare a boolean field whose CLI flag accepts all three forms.
+
+    ``metadata['custom_args']`` is draccus's hook for overriding the
+    ``add_argument`` kwargs it would otherwise infer from the annotation.
+    """
+    return field(default=default, metadata={"custom_args": {"action": BoolFlagAction}})
 
 
 @dataclass
@@ -50,31 +111,31 @@ class TrainConfig:
     """Number of markers to resample (overrides the config's ``num_output_pts``)."""
 
     # ----- tri-state boolean flags (argparse add_bool_flag: --x / --no-x, default None) -----
-    with_att: bool | None = None
+    with_att: bool | None = bool_flag()
     """Whether to use the attention mechanism."""
 
-    use_diff_images: bool | None = None
+    use_diff_images: bool | None = bool_flag()
     """Whether to use difference images as input."""
 
-    use_blank_ref: bool | None = None
+    use_blank_ref: bool | None = bool_flag()
     """Whether to use a blank reference image for diff images."""
 
-    only_pose: bool | None = None
+    only_pose: bool | None = bool_flag()
     """Whether to use only pose as input (no images)."""
 
-    normalize: bool | None = None
+    normalize: bool | None = bool_flag()
     """Whether to normalize the target (marker) data."""
 
-    normalize_inputs: bool | None = None
+    normalize_inputs: bool | None = bool_flag()
     """Whether to normalize the input data."""
 
-    single_encoder: bool | None = None
+    single_encoder: bool | None = bool_flag()
     """Whether to use a single encoder for all digit images."""
 
-    use_spline: bool | None = None
+    use_spline: bool | None = bool_flag()
     """Whether to fit a spline to the predicted nodes."""
 
-    use_weighted_loss: bool | None = None
+    use_weighted_loss: bool | None = bool_flag()
     """Whether to keep the physics loss weights; ``False`` zeros w_edges/w_lengths/w_kb."""
 
     # ----- fine-tune init (argparse: --init_from) -----
@@ -125,7 +186,7 @@ class TrainConfig:
     """WandB entity (username or team). ``None`` means W&B resolves the caller's own
     default entity, so a public user logs to their own account without a flag."""
 
-    use_wandb: bool | None = None
+    use_wandb: bool | None = bool_flag()
     """Whether to use WandB for logging (``None`` -> the training loop defaults to True)."""
 
     # ----- fast-testing limits (argparse: --max_batches / --max_eval_batches) -----
@@ -148,12 +209,12 @@ class TrainConfig:
     """Model architecture: ``'dlo_state'`` (default Sparsh ViT) or ``'direction'``
     (CV direction ablation). Resolved to a model class in ``main()``."""
 
-    drop_augment: bool = False
+    drop_augment: bool = bool_flag(False)
     """Wrap the train set with the 15-mask sensor-drop augmentation (default off)."""
 
     # ----- determinism (argparse: --deterministic / --deterministic_warn_only) -----
-    deterministic: bool = False
+    deterministic: bool = bool_flag(False)
     """Enable deterministic PyTorch behavior for better reproducibility."""
 
-    deterministic_warn_only: bool = False
+    deterministic_warn_only: bool = bool_flag(False)
     """With ``deterministic``, warn instead of error on non-deterministic ops."""

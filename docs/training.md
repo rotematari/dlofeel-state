@@ -90,8 +90,9 @@ worked example). The tables below are a reading aid, not the contract.
 
 Every optional scalar defaults to `None`, meaning "do not override the YAML". The
 old CLI's own defaults (batch size 128, lr 1e-3, ...) are gone: omitting a flag now
-yields the YAML value rather than an argparse default. The tri-state booleans accept
-`--flag`, `--flag true`, `--flag false`, or omission.
+yields the YAML value rather than an argparse default. Every boolean flag accepts
+`--flag`, `--no-flag`, an explicit `--flag true` / `--flag false`, or omission; for
+the tri-state booleans, omission is what leaves the YAML value in charge.
 
 ### `dlofeel-train`
 

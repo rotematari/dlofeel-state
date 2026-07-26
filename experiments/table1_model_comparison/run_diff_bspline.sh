@@ -33,7 +33,7 @@ cd "$REPO_ROOT"
 # --num_resample_points 16 with --n_control_points 16 fixes K=16 (and resamples
 # the GT to 16), matching the k16 base (spline-on reference), so both emit [B,16,3].
 COMMON_ARGS=(
-    --config_path        src/dlofeel_state/configs/default.yaml
+    --train_config_path  src/dlofeel_state/configs/default.yaml
     --norm_stats_path    src/dlofeel_state/configs/norm_stats_k16.yaml
     --train_data_root    src/datasets/c1/ds/train
     --val_data_root      src/datasets/c1/ds/test

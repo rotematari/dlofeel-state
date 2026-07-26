@@ -37,7 +37,7 @@ CFG=src/dlofeel_state/configs
 
 # k16 base train args (use_spline=true inherited from default.yaml; WITH L_weighted).
 COMMON=(
-    --config_path        src/dlofeel_state/configs/default.yaml
+    --train_config_path  src/dlofeel_state/configs/default.yaml
     --train_data_root    src/datasets/c3/ds/train
     --val_data_root      src/datasets/c3/ds/test
     --blank_ref_root     src/datasets/ds/digit_blank_closed_refs

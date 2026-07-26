@@ -54,7 +54,7 @@ COMMON_ARGS=(
     --train_data_root "src/datasets/c1/ds/train"
     --val_data_root "src/datasets/c1/ds/test"
     --blank_ref_root "src/datasets/ds/digit_blank_closed_refs"
-    --config_path "src/dlofeel_state/configs/default.yaml"
+    --train_config_path "src/dlofeel_state/configs/default.yaml"
     --norm_stats_path "src/dlofeel_state/configs/norm_stats_k16.yaml"
     --num_resample_points 16
     --n_control_points 16

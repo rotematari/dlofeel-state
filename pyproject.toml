@@ -61,6 +61,10 @@ dlofeel_state = ["configs/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Test THIS checkout's sources. An editable install pins `dlofeel_state` to the
+# path it was installed from, so without this a run inside a git worktree
+# silently imports the primary checkout instead of the tree under test.
+pythonpath = ["src"]
 
 [tool.ruff]
 target-version = "py312"

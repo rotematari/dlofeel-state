@@ -55,7 +55,7 @@ uv run dlofeel-train \
   --train_data_root src/datasets/c1/ds/train \
   --val_data_root   src/datasets/c1/ds/test \
   --blank_ref_root  src/datasets/c1/ds/digit_blank_closed_refs \
-  --config_path     src/dlofeel_state/configs/default.yaml \
+  --train_config_path src/dlofeel_state/configs/default.yaml \
   --num_resample_points 32 --with_att --normalize --normalize_inputs \
   --use_diff_images --use_blank_ref --single_encoder \
   --image_backbone_type sparsh_vit --epochs 10 --seed 42 \

@@ -23,7 +23,9 @@ real rewiring regression and FAILS.
 
 from __future__ import annotations
 
+import dataclasses
 import importlib.util
+import os
 import re
 import subprocess
 import sys
@@ -113,3 +115,163 @@ def test_build_combined_union_imports_as_library() -> None:
     # names survive as distinct <cable>__<session> dests.
     pairs = mod.plan_union_links({"c1": ["/x/sA"], "c2": ["/y/sA"]})
     assert [dest for _, dest in pairs] == ["c1__sA", "c2__sA"]
+
+
+# ---------------------------------------------------------------------------
+# Shell drivers: the argv they hand to the ``dlofeel-train`` console script
+# ---------------------------------------------------------------------------
+# The shell drivers build their train command as a bash array, so the only
+# faithful way to check it is to let each driver run and intercept what it would
+# have executed. Two capture channels, one per driver shape:
+#
+#   "exec" -- a PATH shim named ``uv`` records argv and exits 0, so the driver
+#             walks its whole command sequence (including the ``uv run python``
+#             helper steps) without launching anything real.
+#   "echo" -- run_c3_xblock.sh guards on released data + a trained checkpoint and
+#             ``exit 2``s without them, so it only runs under ``--dry-run``, which
+#             prints each command instead of executing it. Its own ``CMD :`` echo
+#             is then the capture point. Safe to whitespace-split: every token it
+#             passes is space-free.
+#
+# The reserved-flag trap this guards: draccus owns ``--config_path`` for its own
+# YAML-override loader, so the model-architecture YAML must go to
+# ``--train_config_path`` (see TrainConfig.train_config_path). Passing it to
+# ``--config_path`` fails at decode time, before any training work.
+
+_UV_SHIM = """#!/usr/bin/env bash
+# Stand-in for `uv`: append argv (unit-separated, one line per call) and exit 0.
+{
+  sep=""
+  for a in "$@"; do printf '%s%s' "$sep" "$a"; sep=$'\\x1f'; done
+  printf '\\n'
+} >> "$DLOFEEL_ARGV_CAPTURE"
+exit 0
+"""
+
+# (test_id, path relative to experiments/, extra driver args, channel, expected
+# number of dlofeel-train invocations).
+TRAIN_DRIVERS = [
+    ("run_model_comparison", "table1_model_comparison/run_model_comparison.sh", [], "exec", 3),
+    ("run_diff_bspline", "table1_model_comparison/run_diff_bspline.sh", [], "exec", 1),
+    ("run_k_resample", "k_resample/run_k_resample.sh", [], "exec", 5),
+    ("run_c3_xblock", "fig5_transfer/run_c3_xblock.sh", ["--dry-run"], "echo", 3),
+]
+
+_ECHOED_TRAIN = re.compile(r"uv run dlofeel-train\s+(\S.*)$")
+
+
+def _capture_train_argvs(name: str, relpath: str, extra: list[str], channel: str, tmp_path: Path) -> list[list[str]]:
+    """Run a shell driver harmlessly and return each ``dlofeel-train`` argv it built.
+
+    Returned argv lists exclude the leading ``run dlofeel-train`` launcher tokens,
+    so they are exactly what draccus would see.
+    """
+    script = EXP / relpath
+    assert script.is_file(), f"shell driver missing: {script}"
+
+    shim_dir = tmp_path / "shim"
+    shim_dir.mkdir()
+    shim = shim_dir / "uv"
+    shim.write_text(_UV_SHIM)
+    shim.chmod(0o755)
+    capture = tmp_path / "argv_capture.txt"
+    capture.touch()
+
+    env = dict(os.environ)
+    env["PATH"] = f"{shim_dir}{os.pathsep}{env['PATH']}"
+    env["DLOFEEL_ARGV_CAPTURE"] = str(capture)
+
+    proc = subprocess.run(
+        ["bash", str(script), *extra],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,  # the return code is the assertion below, not an exception
+    )
+    assert proc.returncode == 0, (
+        f"{name} exited {proc.returncode} under the dry-run shim\n"
+        f"--- stderr (tail) ---\n{proc.stderr[-3000:]}"
+    )
+
+    if channel == "exec":
+        argvs = [
+            argv[2:]
+            for argv in (line.split("\x1f") for line in capture.read_text().splitlines())
+            if argv[:2] == ["run", "dlofeel-train"]
+        ]
+    else:
+        argvs = [
+            m.group(1).split()
+            for line in proc.stdout.splitlines()
+            if (m := _ECHOED_TRAIN.search(line))
+        ]
+    return argvs
+
+
+@pytest.fixture(scope="module")
+def train_config_fields() -> set[str]:
+    from dlofeel_state.configs.train import TrainConfig
+
+    return {f.name for f in dataclasses.fields(TrainConfig)}
+
+
+@pytest.mark.parametrize(
+    "name,relpath,extra,channel,n_expected", TRAIN_DRIVERS, ids=[d[0] for d in TRAIN_DRIVERS]
+)
+def test_driver_train_argv_uses_real_trainconfig_flags(
+    name: str, relpath: str, extra: list[str], channel: str, n_expected: int,
+    tmp_path: Path, train_config_fields: set[str],
+) -> None:
+    """Every flag a driver passes to ``dlofeel-train`` names a real TrainConfig field.
+
+    In particular the model YAML must NOT ride on draccus's reserved
+    ``--config_path``: that flag loads a draccus override file whose keys are
+    TrainConfig fields, so handing it the model-architecture YAML raises
+    ``DecodingError`` on ``model_params``, ``num_output_pts``, etc.
+
+    A ``--no-<field>`` token is the negated form of ``<field>`` (see
+    ``BoolFlagAction``), so it is checked against the same field set.
+    """
+    argvs = _capture_train_argvs(name, relpath, extra, channel, tmp_path)
+    assert len(argvs) == n_expected, f"{name}: captured {len(argvs)} train invocations, want {n_expected}"
+
+    for argv in argvs:
+        flags = [t for t in argv if t.startswith("--")]
+        assert "--config_path" not in flags, (
+            f"{name}: passes the model YAML through draccus's reserved --config_path; "
+            "use --train_config_path"
+        )
+        assert "--train_config_path" in flags, f"{name}: no --train_config_path in {flags}"
+        unknown = [f for f in flags if f.removeprefix("--no-").removeprefix("--") not in train_config_fields]
+        assert not unknown, f"{name}: flags absent from TrainConfig: {unknown}"
+
+
+@pytest.mark.parametrize(
+    "name,relpath,extra,channel,n_expected", TRAIN_DRIVERS, ids=[d[0] for d in TRAIN_DRIVERS]
+)
+def test_driver_train_argv_parses_as_trainconfig(
+    name: str, relpath: str, extra: list[str], channel: str, n_expected: int, tmp_path: Path
+) -> None:
+    """The strong form: each captured argv decodes into a TrainConfig via draccus.
+
+    Covers the flag NAMES and the flag FORMS together -- the drivers lean on the
+    bare ``--with_att`` and negated ``--no-use_wandb`` spellings that
+    ``BoolFlagAction`` provides, so a regression in either surfaces here.
+    """
+    import draccus
+
+    from dlofeel_state.configs.train import TrainConfig
+
+    argvs = _capture_train_argvs(name, relpath, extra, channel, tmp_path)
+    assert len(argvs) == n_expected
+
+    for argv in argvs:
+        cfg = draccus.parse(TrainConfig, args=argv, exit_on_error=False)
+        assert cfg.train_config_path.endswith(".yaml")
+        # Every driver asks for attention + normalized inputs and silences W&B.
+        assert cfg.with_att is True
+        assert cfg.normalize_inputs is True
+        # Omitted flags must stay None so the model YAML keeps deciding.
+        assert cfg.only_pose is None or "--only_pose" in argv

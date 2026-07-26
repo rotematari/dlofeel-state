@@ -46,7 +46,7 @@ BLANK_REF="src/datasets/ds/digit_blank_closed_refs"
 # loop. The shipped norm_stats_k16.yaml is only a base for the K-independent
 # ee/digit blocks; its per-marker block is [16,3] and applies to K=16 alone.
 COMMON_ARGS=(
-    --config_path        src/dlofeel_state/configs/default.yaml
+    --train_config_path  src/dlofeel_state/configs/default.yaml
     --train_data_root    src/datasets/c1/ds/train
     --val_data_root      src/datasets/c1/ds/test
     --blank_ref_root     "$BLANK_REF"
