@@ -54,3 +54,19 @@ def test_relative_markdown_links_resolve():
                 if not (f.parent / path).resolve().exists():
                     broken.append(f"{f.relative_to(REPO)}:{i} -> {target}")
     assert not broken, f"broken relative links: {broken}"
+
+
+def test_readme_covers_release_essentials():
+    """The README must carry the things a public reader needs to get started."""
+    text = (REPO / "README.md").read_text(encoding="utf-8")
+    required = [
+        "DLOFeel-State",          # project name
+        "30.52",                  # headline RMSE
+        "--recurse-submodules",   # Sparsh is a submodule; clone must say so
+        "dlofeel-eval",           # a runnable entrypoint
+        "docs/DATA.md",           # how to get data
+        "CITATION.cff",           # citation metadata
+        "CC-BY-NC",               # the Sparsh licence boundary
+    ]
+    missing = [r for r in required if r not in text]
+    assert not missing, f"README missing required content: {missing}"
