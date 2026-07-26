@@ -63,7 +63,8 @@ def main() -> None:
     p.add_argument("--max_eval_batches", type=int, default=0)
 
     p.add_argument("--wandb_project", type=str, default="dlo-state-estimation")
-    p.add_argument("--wandb_entity", type=str, default="dlo")
+    # None => W&B resolves the caller's own default entity (no private entity baked in).
+    p.add_argument("--wandb_entity", type=str, default=None)
     p.add_argument("--use_wandb", action="store_true")
 
     p.add_argument("--exp_name", type=str, default=None,

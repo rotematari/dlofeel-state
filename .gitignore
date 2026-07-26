@@ -17,6 +17,11 @@ wheels/
 # Virtual environments
 .venv/
 
+# Staged datasets. docs/DATA.md has the reader symlink their download to
+# src/datasets/<cable>; nothing under it is tracked, so ignoring the whole
+# directory keeps `git status` clean while the data is staged.
+src/datasets/
+
 # Run outputs
 results/
 results_eval/

@@ -359,6 +359,28 @@ epoch 002  train 0.2534  val 0.0368 ± 0.0189
 | `dataset/*` | Once (init) | Train/val session counts |
 | `best_val` | Summary | Best validation loss across all epochs |
 
+### Visualisation Viewers
+
+Two optional [viser](https://viser.studio) debug viewers ship under
+`src/dlofeel_state/viz/`, each run directly as a script:
+
+| Module | Shows |
+|---|---|
+| `viz/dataset.py` | A dataset split: ground-truth vertex chain, EE pose, DIGIT frames |
+| `viz/predictions.py` | A `preds_gts.h5` written by `dlofeel-eval`: prediction against ground truth, per-frame loss, DIGIT frames |
+
+Both hard-code their input paths at the top of the file; edit those before running. They
+are inspection tools only — no metric, checkpoint, or published number depends on them.
+
+> **Colour channels.** `viz/predictions.py` decodes its DIGIT thumbnails through
+> `_decode_image_1d` from `data/dataset.py`, which converts `bgr8` payloads to **RGB**.
+> The corresponding viewer in the original research tree imported a different decoder,
+> one that returned `bgr8` payloads unchanged, so its tactile thumbnails show red and
+> blue swapped relative to this one. The difference is confined to the debug viewer:
+> the dataset feeding the model has always applied the RGB conversion, so no metric,
+> checkpoint, or published number is affected. Expect the channel order here to differ
+> from the tactile images printed in the paper's figures.
+
 ---
 
 ## 6. Hyperparameter Sweeps
@@ -476,7 +498,9 @@ The model is described in [model.md](model.md) §10.2.
 
 - **Parameter counts:** Total, trainable, frozen (with percentages).
 - **Model size:** In MB (assuming float32).
-- **Inference time:** Mean over 10 forward passes (after 3 warmup runs), with CUDA sync.
+- **Inference time:** Mean wall-clock over 10 forward passes of one full batch (after 3
+  warmup runs), with CUDA sync. The inputs are random dummy tensors, so the figure covers
+  the forward pass alone, excluding data loading and preprocessing.
 - **Per-component breakdown:** Parameter counts for each top-level submodule.
 - **Dataset sessions:** Train and val session counts.
 
@@ -497,6 +521,14 @@ Per-component breakdown:
   cross_attn                    66,048 params (66,048 trainable)
   simple_decoder                10,627 params (10,627 trainable)
 ```
+
+> **On the 60.52 ms.** That is one run's own `log_model_info()` line, not the paper's
+> reported latency. It is a per-batch (`batch_size=32`) forward-pass timing produced by
+> whatever GPU that particular training job ran on, and it moves with the hardware, the
+> torch build, and the arm's parameter count — the released K = 16 checkpoint's own
+> `training_log.txt`, for instance, records a different value again. The citable number
+> is the **61.5 ms** in the [README](../README.md), measured on an RTX 5090; quote that
+> one. Read the block above as an illustration of the log format.
 
 ---
 

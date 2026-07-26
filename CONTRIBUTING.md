@@ -58,8 +58,8 @@ pytest -q
 ```
 
 The suite needs no dataset download. The only data in git is the 8-frame fixture under
-`tests/fixtures/parity/`, so a clean checkout gives **35 passed, 3 skipped** in about a
-minute. The three skips are the checkpoint-gated tests:
+`tests/fixtures/parity/`, so a clean checkout gives **34 passed, 4 skipped** in about a
+minute. Three of the skips are the checkpoint-gated tests:
 
 | Test | What it gates |
 |---|---|
@@ -69,14 +69,22 @@ minute. The three skips are the checkpoint-gated tests:
 
 Each reads the checkpoint path from `DLOFEEL_PARITY_CKPT` and skips when it is unset,
 because the 137 MB checkpoint is not committed. Point it at the released `best.pt` to
-run the full **38 passed**:
+run **37 passed, 1 skipped**:
 
 ```bash
 export DLOFEEL_PARITY_CKPT=/path/to/k16/best.pt
 pytest -v
 ```
 
-Those three tests use CUDA when torch finds it and fall back to CPU otherwise. The
+The fourth skip is `test_shim_reproduces_vendored_pos_encoding` in
+`tests/test_sparsh_import.py`, and no checkpoint will turn it on. It compares the Sparsh
+import shim's patched positional-encoding interpolation against the frozen research tree
+the port was made from, which it expects beside the repository. That tree is not
+published, so the test self-skips everywhere except the author's machine, both in CI and
+on your clone. That is the expected state, not a setup error. Its companion,
+`test_sparsh_builders_import`, does run and covers the shim's import surface.
+
+Those three checkpoint tests use CUDA when torch finds it and fall back to CPU otherwise. The
 tolerance below was validated on CUDA, so treat a CPU-only failure as uncharacterized
 rather than as a regression, and mention the platform in the issue or pull request.
 

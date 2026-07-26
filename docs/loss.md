@@ -211,7 +211,22 @@ points → edges → edge_lengths → curvature_binormal (κb)
 
 ## 4. Bending Energy (`src/dlofeel_state/losses/bending.py`)
 
-Full bending-energy computation based on the Discrete Elastic Rods model. **Not currently used in the default training loss**, but available as a standalone module for analysis and potential future regularisation.
+Full bending-energy computation based on the Discrete Elastic Rods model.
+
+> **Status: reference implementation, not shipped code.** Nothing in this release calls
+> `bending.py` — no module under `src/`, no experiment driver, no test, no script. It is
+> reachable only through its own `__main__` demo block. The training objective does not
+> route through it either: `WeightedLoss` supervises curvature by calling
+> `compute_curvature_binormal` from [`der.py`](../src/dlofeel_state/losses/der.py)
+> directly (§2.3), never the material-frame energy below. And the twist machinery this
+> module depends on is inert, because `optimize_twist_angle()` returns zeros with its
+> solver options commented out (§3.4), so `pipeline_points_to_material_frame` always
+> yields the twist-free material frame.
+>
+> The module ships because it is the reference DER bending energy the physics-informed
+> loss is derived from, and because it documents the full formulation the paper cites.
+> Read it as reference material. Treating it as an optional loss term you can switch on
+> would take real work: a twist solve, a weight, and a place in `WeightedLoss`.
 
 ### `compute_bending_energy(points_3d, m1, m2, kb, edge_lengths, ...)`
 
@@ -304,7 +319,7 @@ Validation:
   └── mean_point_distance_per_sample() ← losses/chamfer.py
         └── torch.norm()
 
-Standalone (not in training loop):
+Reference only (no callers in this release):
   └── compute_bending_energy_from_points() ← losses/bending.py
         └── pipeline_points_to_material_frame() ← losses/der.py
               ├── compute_bishop_u0()
@@ -348,7 +363,7 @@ src/dlofeel_state/losses/
 ├── weighted.py    # WeightedLoss (composite physics-informed loss) + compute_weighted_loss
 ├── der.py         # DER primitives: edges, lengths, curvature binormal,
 │                  #   Bishop frame, material frame, full pipeline
-└── bending.py     # Bending energy computation (standalone, not in training)
+└── bending.py     # Reference DER bending energy (§4) — no callers in this release
 
 src/dlofeel_state/engine/
 ├── train.py       # Composes the training loss; owns the validation loop

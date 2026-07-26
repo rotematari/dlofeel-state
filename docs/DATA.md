@@ -166,9 +166,9 @@ normalization pass additionally wants a `c1` + `c2` + `c3` union directory at
 [`experiments/fig5_transfer/build_combined_union.py`](../experiments/fig5_transfer/build_combined_union.py)
 rather than by hand.
 
-`*.h5` is git-ignored, so staged sample files never show up as changes. The
-`src/datasets/` directory itself is not ignored, so the symlinks will appear as
-untracked; add them to `.git/info/exclude` locally if that bothers you.
+`src/datasets/` is git-ignored in full, so staging the data leaves
+`git status` clean: neither the symlinks nor the `*.h5` files under them show up
+as changes. Nothing in that directory is tracked.
 
 ---
 
@@ -205,22 +205,26 @@ statistics file. Generate one with
 
 ```bash
 python experiments/k_resample/gen_k_norm_stats.py \
-  --K 32 \
+  --K 64 \
   --train_root src/datasets/c1/ds/train \
-  --base_stats src/dlofeel_state/configs/norm_stats_k16.yaml \
   --blank_ref_root src/datasets/ds/digit_blank_closed_refs \
-  --out src/dlofeel_state/configs/norm_stats_k32.yaml
+  --out src/dlofeel_state/configs/norm_stats_k64.yaml
 ```
 
-Two things to know about that command:
+Three things to know about that command:
 
-- Pass `--base_stats` explicitly. Its default names a `norm_stats.yaml` that is
-  not part of this release; the shipped `norm_stats_k16.yaml` supplies the same
-  `digit_image_stats` and `ee_position_stats` blocks, which is all the base file
-  is used for.
-- Add `--recompute_all` when generating statistics for `c2`, `c3`, or the union,
-  whose DIGIT image and EE pose distributions differ from `c1`. Without it those
-  two blocks are copied from the base file rather than measured.
+- `--base_stats` defaults to the shipped `norm_stats_k16.yaml` and normally needs
+  no flag. The base file supplies only the K-independent `digit_image_stats` and
+  `ee_position_stats` blocks, which are identical in every per-K file; the
+  `per_marker_stats` block is measured from your data.
+- `--K 32` is the exception. It is the published-`c1` anchor and copies
+  `per_marker_stats` straight from the base rather than measuring it, so it needs
+  a 32-marker base file, which this release does not ship. Run it with
+  `--recompute_all` to measure the block from data instead. Passing a shorter base
+  is an error, not a silent copy-through.
+- Add `--recompute_all` in any case when generating statistics for `c2`, `c3`, or
+  the union, whose DIGIT image and EE pose distributions differ from `c1`. Without
+  it those two blocks are copied from the base file rather than measured.
 
 The generator is idempotent: it reuses an existing output file whose
 `per_marker_stats` already has K rows unless you pass `--force`. Run

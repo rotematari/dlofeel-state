@@ -443,7 +443,7 @@ where \(k_b, k_t\) are bending and twist stiffnesses, \(\bar{l}_i\) are Voronoi 
 |----------|-------|--------|
 | Edges, edge lengths, curvature binormal \(\kappa\mathbf{b}\) | `losses/der.py` | Used by the training loss (`WeightedLoss`) |
 | Bishop frame (quaternion parallel transport), material frame \(\mathbf{m}_1, \mathbf{m}_2\) | `losses/der.py` | Implemented; reachable via `pipeline_points_to_material_frame` |
-| Material curvature \(\boldsymbol{\omega}\), bending energy \(E_\text{bend}\) | `losses/bending.py` | Implemented; **not** part of the default training loss |
+| Material curvature \(\boldsymbol{\omega}\), bending energy \(E_\text{bend}\) | `losses/bending.py` | Implemented as a **reference only**; nothing in this release calls it ([loss.md](loss.md) §4) |
 | Twist angle \(\theta\) and the twisting energy term | — | **Not implemented.** \(\theta = 0\) throughout (twist-free rod); no nonlinear twist solve |
 | Rod simulation (forward dynamics, PBD constraints, gravity) | — | **Not part of this repository** |
 

@@ -121,8 +121,9 @@ class TrainConfig:
     wandb_project: str = "dlo-state-estimation"
     """WandB project name."""
 
-    wandb_entity: str = "dlo"
-    """WandB entity (username or team)."""
+    wandb_entity: str | None = None
+    """WandB entity (username or team). ``None`` means W&B resolves the caller's own
+    default entity, so a public user logs to their own account without a flag."""
 
     use_wandb: bool | None = None
     """Whether to use WandB for logging (``None`` -> the training loop defaults to True)."""

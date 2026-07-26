@@ -3,16 +3,18 @@
 Per-K marker-normalization-stats generator for the K-resample ablation.
 
 Each K-arm of the sweep resamples the GT markers to ``K`` points, so its
-``per_marker_stats`` must be ``[K, 3]`` rather than the base ``[32, 3]`` array in
-``configs/norm_stats.yaml`` (normalization broadcasts ``[K,3] / [K,3]``; a ``[32,3]``
-array crashes for every K != 32). This script builds a dataset with
+``per_marker_stats`` must be ``[K, 3]`` rather than the base file's array
+(normalization broadcasts ``[K,3] / [K,3]``; a mismatched row count crashes).
+This script builds a dataset with
 ``num_resample_points=K``, computes the marker mean/std over the resampled GT via
 ``compute_all_stats(..., num_out_samples=K)``, and writes a per-K stats YAML whose
 schema matches the base file. The ``ee_position_stats`` and ``digit_image_stats``
 blocks are copied verbatim from the base (they are K-independent).
 
 K == 32 is the published-C1 anchor: its ``per_marker_stats`` is copied verbatim from
-the base file (no data pass) for an exact reproduction of the C1 normalization.
+the base file (no data pass) for an exact reproduction of the C1 normalization. That
+one path is the only use of the base's ``per_marker_stats``, so it requires a 32-row
+base and rejects anything else rather than writing a wrong-shaped file.
 
 ``--recompute_all`` is the cross-cable mode: it recomputes ALL THREE blocks (digit +
 ee + per-marker) from ``--train_root`` itself, copying nothing from the base. It is for
@@ -31,7 +33,7 @@ Usage (from repo root):
     uv run python experiments/k_resample/gen_k_norm_stats.py \
       --K 8 \
       --train_root src/datasets/c1/ds/train \
-      --base_stats src/dlofeel_state/configs/norm_stats.yaml \
+      --base_stats src/dlofeel_state/configs/norm_stats_k16.yaml \
       --out src/dlofeel_state/configs/norm_stats_k8.yaml
 """
 
@@ -50,7 +52,12 @@ if str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 
 DEFAULT_TRAIN_ROOT = "src/datasets/c1/ds/train"
-DEFAULT_BASE_STATS = "src/dlofeel_state/configs/norm_stats.yaml"
+# The shipped stats file. Only its K-independent ``digit_image_stats`` /
+# ``ee_position_stats`` blocks are read on the default path, and those are identical
+# across every per-K file, so the K=16 release file is a valid base for any K != 32.
+# K == 32 additionally copies ``per_marker_stats`` and therefore demands a 32-row base
+# (see ``_assemble_k32_anchor``), which this file is not.
+DEFAULT_BASE_STATS = "src/dlofeel_state/configs/norm_stats_k16.yaml"
 DEFAULT_BLANK_REF_ROOT = "src/datasets/ds/digit_blank_closed_refs"
 
 
@@ -71,10 +78,10 @@ def _assemble_stats_yaml(
 
     ``ee_position_stats`` and ``digit_image_stats`` are copied verbatim from the
     base (K-independent); ``per_marker_stats`` is replaced by the supplied ``[K,3]``
-    mean/std. Schema matches the base ``norm_stats.yaml``.
+    mean/std. Schema matches the base stats YAML.
 
     Args:
-        base_stats: Parsed base ``norm_stats.yaml`` dict.
+        base_stats: Parsed base stats-YAML dict.
         marker_mean: ``[K, 3]`` per-marker mean (e.g. ``stats["marker_mean"]``).
         marker_std: ``[K, 3]`` per-marker std (e.g. ``stats["marker_std"]``).
 
@@ -90,7 +97,21 @@ def _assemble_stats_yaml(
 
 
 def _assemble_k32_anchor(base_stats: dict[str, Any]) -> dict[str, Any]:
-    """K==32 anchor: per-K stats == base verbatim (per-marker, ee, digit all copied)."""
+    """K==32 anchor: per-K stats == base verbatim (per-marker, ee, digit all copied).
+
+    This is the only path that reads the base's ``per_marker_stats``, so the base must
+    itself be the 32-marker file. A shorter base (e.g. the shipped ``norm_stats_k16``)
+    would otherwise be copied through silently and yield a K=32 stats file holding the
+    wrong number of rows.
+    """
+    rows = _row_count(base_stats)
+    if rows != 32:
+        raise SystemExit(
+            f"--base_stats has per_marker_stats with {rows} rows, but K=32 copies that "
+            f"block verbatim and needs 32. The released repository ships only "
+            f"{DEFAULT_BASE_STATS}; pass the 32-marker stats file explicitly, or "
+            f"regenerate the K=32 arm from data with --recompute_all."
+        )
     return _assemble_stats_yaml(
         base_stats,
         base_stats["per_marker_stats"]["mean"],
@@ -113,7 +134,7 @@ def _assemble_full_stats_yaml(
     split. Used by ``--recompute_all`` for cables whose EE/digit distributions
     differ from c1 (the base-copy path would be wrong for them).
 
-    Schema matches ``configs/norm_stats.yaml`` exactly: ``digit_image_stats``,
+    Schema matches the shipped stats YAML exactly: ``digit_image_stats``,
     ``ee_position_stats``, ``per_marker_stats``, each with ``mean``/``std``.
 
     Args:
@@ -194,7 +215,7 @@ def generate_k_stats(
     Args:
         K: Number of resampled output markers (per-marker stats become ``[K, 3]``).
         train_root: Train split root (``sample*.h5`` dir or packed ``.h5``).
-        base_stats_path: Base ``norm_stats.yaml`` (source of ee/digit blocks, K=32 anchor).
+        base_stats_path: Base stats YAML (source of ee/digit blocks, K=32 anchor).
         out_path: Destination ``norm_stats_k{K}.yaml``.
         blank_ref_root: Digit blank-reference dir (dataset construction; unused for stats).
         num_workers: DataLoader workers for the stats pass.
@@ -285,7 +306,7 @@ def generate_full_stats(
     """Recompute ALL THREE stats blocks (digit + ee + per-marker) from one cable's train split.
 
     The default ``generate_k_stats`` path recomputes only ``per_marker_stats`` and
-    copies ee/digit verbatim from the base c1 ``norm_stats.yaml``. That is wrong for
+    copies ee/digit verbatim from the base c1 stats file. That is wrong for
     a different cable (c2/c3) or the c1+c2+c3 union, whose EE-pose and DIGIT-image
     distributions differ. This path recomputes every block from ``train_root`` itself.
 
@@ -397,7 +418,7 @@ def _selftest() -> None:
     """
     import math
 
-    # Synthetic base in the real norm_stats.yaml schema (per_marker_stats is [32,3]).
+    # Synthetic base in the shipped stats schema, 32 markers (what the K=32 anchor needs).
     base_digit = {"mean": [0.1, 0.2, 0.3], "std": [0.4, 0.5, 0.6]}
     base_ee = {"mean": [0.0] * 7, "std": [1.0] * 7}
     base_marker_mean = [[float(i), float(i) + 0.1, float(i) + 0.2] for i in range(32)]
@@ -438,6 +459,15 @@ def _selftest() -> None:
     # _row_count agrees with K.
     assert _row_count(out) == K and _row_count(anchor) == 32, "row-count helper mismatch"
 
+    # K=32 anchor rejects a short base (the shipped K=16 file) instead of copying it through.
+    short_base = dict(base_stats, per_marker_stats={"mean": fake_mean, "std": fake_std})
+    try:
+        _assemble_k32_anchor(short_base)
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("K=32 anchor accepted a base whose per_marker_stats is not [32,3]")
+
     # --recompute_all assembly: full 3-block dict from synthetic compute_all_stats output.
     full_digit_mean = [0.07, 0.07, 0.07]
     full_digit_std = [0.16, 0.17, 0.17]
@@ -466,23 +496,23 @@ def _selftest() -> None:
         "full per_marker_stats not [K,...]"
     )
     assert all(len(row) == 3 for row in full["per_marker_stats"]["mean"]), "full per_marker rows not [.,3]"
-    # Block-level schema identity against the real on-disk norm_stats.yaml (mean/std keys per block).
-    real_stats_path = _src_dir.parent / "src" / "dlofeel_state" / "configs" / "norm_stats.yaml"
+    # Block-level schema identity against the real on-disk stats file (mean/std keys per block).
+    real_stats_path = _src_dir.parent / DEFAULT_BASE_STATS
     if real_stats_path.exists():
         real = _load_yaml(real_stats_path)
         assert set(full.keys()) == set(real.keys()), (
-            f"full-stats top-level keys {set(full.keys())} != norm_stats.yaml {set(real.keys())}"
+            f"full-stats top-level keys {set(full.keys())} != {real_stats_path.name} {set(real.keys())}"
         )
         for block in full:
             assert set(full[block].keys()) == set(real[block].keys()), (
-                f"block '{block}' keys {set(full[block].keys())} != norm_stats.yaml {set(real[block].keys())}"
+                f"block '{block}' keys {set(full[block].keys())} != {real_stats_path.name} {set(real[block].keys())}"
             )
         # Shapes match the published c1 base (digit[3], ee[7]) — K-row count is per-arm.
         assert len(real["digit_image_stats"]["mean"]) == len(full["digit_image_stats"]["mean"]), (
-            "digit block width drifted from norm_stats.yaml"
+            "digit block width drifted from the shipped stats file"
         )
         assert len(real["ee_position_stats"]["mean"]) == len(full["ee_position_stats"]["mean"]), (
-            "ee block width drifted from norm_stats.yaml"
+            "ee block width drifted from the shipped stats file"
         )
 
     # Bad shapes must be rejected by the assertions in _assemble_full_stats_yaml.
@@ -508,7 +538,8 @@ def _selftest() -> None:
 
     print(
         "selftest OK: per-K assembly [K,3] finite, ee/digit verbatim; K=32 anchor unchanged; "
-        "full-stats 3-block digit[3]/ee[7]/per_marker[K,3] schema-key-identical to norm_stats.yaml."
+        "full-stats 3-block digit[3]/ee[7]/per_marker[K,3] schema-key-identical to the shipped "
+        "stats file; K=32 anchor rejects a non-32-row base."
     )
 
 
@@ -523,7 +554,8 @@ def main() -> None:
     p.add_argument("--train_root", type=str, default=DEFAULT_TRAIN_ROOT,
                    help="Train split root (sample*.h5 dir or packed .h5).")
     p.add_argument("--base_stats", type=str, default=DEFAULT_BASE_STATS,
-                   help="Base norm_stats.yaml (ee/digit source + K=32 anchor).")
+                   help="Base stats YAML (ee/digit source; K=32 also copies its per-marker "
+                        "block and so needs a 32-row file). Default: the shipped K=16 file.")
     p.add_argument("--out", type=str, default=None,
                    help="Output norm_stats_k{K}.yaml path (default: configs/norm_stats_k{K}.yaml).")
     p.add_argument("--blank_ref_root", type=str, default=DEFAULT_BLANK_REF_ROOT,
