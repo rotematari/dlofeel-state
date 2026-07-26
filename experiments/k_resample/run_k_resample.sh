@@ -42,8 +42,9 @@ BLANK_REF="src/datasets/ds/digit_blank_closed_refs"
 # C1 best-run hyperparameters (shared across every K). The K-dependent flags
 # (--num_resample_points, --n_control_points, --norm_stats_path, --exp_name,
 # --out_dir) are appended per-iteration in the loop below. --norm_stats_path is
-# NOT here: each K-arm needs its own [K,3] per_marker_stats (the base
-# norm_stats.yaml is [32,3] and only valid for K=32).
+# NOT here: each K-arm needs its own [K,3] per_marker_stats, generated in the
+# loop. The shipped norm_stats_k16.yaml is only a base for the K-independent
+# ee/digit blocks; its per-marker block is [16,3] and applies to K=16 alone.
 COMMON_ARGS=(
     --config_path        src/dlofeel_state/configs/default.yaml
     --train_data_root    src/datasets/c1/ds/train
@@ -76,15 +77,25 @@ for K in 8 16 32 64 128; do
     echo " Output: results/k_resample_ablation/k${K}"
     echo "=============================================="
 
-    # Per-K normalization stats: [K,3] per_marker_stats from this K's resampled GT
-    # (K=32 copies the base anchor verbatim). Idempotent — skips if the file already
-    # exists with K rows. Committed to configs/ so reruns reuse it.
+    # Per-K normalization stats: [K,3] per_marker_stats from this K's resampled GT,
+    # with the K-independent ee/digit blocks copied from the shipped K=16 base.
+    # Idempotent — skips if the file already exists with K rows.
+    #
+    # K=32 is the one arm the base-copy path cannot serve: it copies the base's
+    # per_marker_stats verbatim and so demands a 32-row base, which this release
+    # does not ship. --recompute_all recomputes all three blocks from --train_root
+    # instead, which is the same c1 train split the base was derived from.
     K_STATS="src/dlofeel_state/configs/norm_stats_k${K}.yaml"
+    if [[ "$K" -eq 32 ]]; then
+        K_STATS_ARGS=(--recompute_all)
+    else
+        K_STATS_ARGS=(--base_stats src/dlofeel_state/configs/norm_stats_k16.yaml)
+    fi
     uv run python \
         experiments/k_resample/gen_k_norm_stats.py \
         --K "$K" \
         --train_root src/datasets/c1/ds/train \
-        --base_stats src/dlofeel_state/configs/norm_stats.yaml \
+        "${K_STATS_ARGS[@]}" \
         --blank_ref_root "$BLANK_REF" \
         --out "$K_STATS"
 

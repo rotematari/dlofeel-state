@@ -45,7 +45,7 @@ COMMON_ARGS=(
     --val_data_root    "src/datasets/c1/ds/test"
     --blank_ref_root   "src/datasets/ds/digit_blank_closed_refs"
     --config_path      "$BEST_CONFIG"
-    --norm_stats_path  "src/dlofeel_state/configs/norm_stats.yaml"
+    --norm_stats_path  "src/dlofeel_state/configs/norm_stats_k16.yaml"
     --k_repeats        3
     --epochs_per_trial 10
     --with_att
@@ -54,7 +54,10 @@ COMMON_ARGS=(
     --use_diff_images
     --use_blank_ref
     --single_encoder
-    --num_resample_points 32
+    # K must match the per_marker_stats row count of --norm_stats_path: the
+    # dataset normalizes the [K,3] resampled GT against it elementwise, so a
+    # mismatch is a broadcast error. The stats file this release ships is K=16.
+    --num_resample_points 16
     --batch_size       32
     --lr               7.147008552233424e-5
     --dropout          0.1

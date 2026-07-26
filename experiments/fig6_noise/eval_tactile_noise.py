@@ -152,7 +152,7 @@ def compute_channel_stats(
     axes so the 6 channels (dim 2) each get one ``(mean, std)`` pair. These are
     the empirical moments of the *already-normalized, already-diffed*
     ``digit_images`` (a DIFFERENT quantity from
-    ``norm_stats.yaml:digit_image_stats``, the input-normalization mean/std), and
+    ``norm_stats_k16.yaml:digit_image_stats``, the input-normalization mean/std), and
     they set both the ``eps`` distribution and the SNR scale of the sweep.
 
     Args:

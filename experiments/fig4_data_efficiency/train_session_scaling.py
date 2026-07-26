@@ -883,7 +883,7 @@ if __name__ == "__main__":
     p.add_argument("--config_path", type=str,
                    default="src/dlofeel_state/configs/default.yaml")
     p.add_argument("--norm_stats_path", type=str,
-                   default="src/dlofeel_state/configs/norm_stats.yaml")
+                   default="src/dlofeel_state/configs/norm_stats_k16.yaml")
     p.add_argument("--out_dir", type=str, default="results/session_scaling",
                    help="Directory to save result JSON files")
 
@@ -915,7 +915,10 @@ if __name__ == "__main__":
     p.add_argument("--image_backbone_type", type=str, default="sparsh_vit",
                    choices=["sparsh_vit", "resnet18"],
                    help="Image backbone type for ablation runs")
-    p.add_argument("--num_resample_points", type=int, default=32)
+    p.add_argument("--num_resample_points", type=int, default=16,
+                   help="Output marker count K. Must equal the per_marker_stats row "
+                        "count of --norm_stats_path (the [K,3] GT is normalized against "
+                        "it elementwise); the shipped stats file is K=16.")
 
     # Training hyper-parameters
     p.add_argument("--img_size_H", type=int, default=320)
