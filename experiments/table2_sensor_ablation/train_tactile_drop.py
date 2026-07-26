@@ -30,8 +30,8 @@ if str(_src_dir) not in sys.path:
 
 from dlofeel_state.engine.train import train as train_main  # noqa: E402
 
-DEFAULT_CONFIG = str(Path(__file__).resolve().parents[2] / "configs" / "default.yaml")
-DEFAULT_NORM_STATS = str(Path(__file__).resolve().parents[2] / "configs" / "norm_stats_k16.yaml")
+DEFAULT_CONFIG = str(_src_dir / "dlofeel_state" / "configs" / "default.yaml")
+DEFAULT_NORM_STATS = str(_src_dir / "dlofeel_state" / "configs" / "norm_stats_k16.yaml")
 
 
 def main() -> None:

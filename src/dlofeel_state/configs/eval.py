@@ -2,8 +2,8 @@
 
 Thin CLI surface over the parity-locked ``engine.evaluate.evaluate()``: this
 dataclass carries only the run-level knobs (data/checkpoint/output paths and the
-eval hyperparameters that mirror the original ``simplepredict.evaluate`` argparse
-CLI). The large model-architecture config stays as YAML loaded from the
+eval hyperparameters that mirror the original evaluation CLI flags, with the same
+names). The large model-architecture config stays as YAML loaded from the
 checkpoint folder (or ``config_path``), the standard draccus split between a typed
 run config and a YAML model config.
 

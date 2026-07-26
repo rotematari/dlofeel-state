@@ -1,10 +1,10 @@
 """Typed draccus config for the ``dlofeel-train`` console entrypoint.
 
 Thin CLI surface over the ported training loop (``engine.train.train()``): this
-dataclass mirrors, one-for-one, every flag of the original
-``simplepredict.train`` argparse CLI, with the same names and default values. The
+dataclass mirrors, one-for-one, every flag of the original training CLI, with the
+same names and default values. The
 large model-architecture config still lives in a YAML (``train_config_path``,
-default ``configs/train/default.yaml``); this dataclass only carries the
+default ``src/dlofeel_state/configs/default.yaml``); this dataclass only carries the
 run-level overrides that the CLI exposed. draccus's ``main()`` turns these into
 the keyword arguments the ported ``train(...)`` function expects.
 
@@ -30,7 +30,7 @@ class TrainConfig:
     """Directory of DIGIT blank reference images for diff images (else from the YAML config)."""
 
     # ----- config / stats paths (argparse: --config_path / --norm_stats_path) -----
-    train_config_path: str = "configs/train/default.yaml"
+    train_config_path: str = "src/dlofeel_state/configs/default.yaml"
     """Path to the model/training YAML config (the original ``--config_path``).
 
     Renamed ``train_config_path`` because draccus reserves the flag

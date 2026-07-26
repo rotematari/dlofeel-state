@@ -1,4 +1,6 @@
 raw_digit_dimensions: List[int] = [3,240, 320]
+# Placeholder data paths (blank_ref_root / train_data_root / val_data_root):
+# point these at your downloaded dataset (see the data-download docs).
 blank_ref_root: src/datasets/ds/digit_blank_closed_refs
 n_markers: 14
 past_window_steps: 1
@@ -20,7 +22,9 @@ model_params:
     unfreeze_last_n_blocks: 2
     single_encoder: true
     fusion_method: learned_sum
-    pretrained_weights_path: src/sparsh/checkpoints/dino_vitsmall.ckpt
+    # Sparsh DINO pretrained checkpoint: downloaded separately (HF, Phase 3) and
+    # only needed to TRAIN from scratch; eval loads a full checkpoint and blanks this.
+    pretrained_weights_path: third_party/sparsh/checkpoints/dino_vitsmall.ckpt
     backbone_lr_factor: 0.5
     upto_layer: 2
   latent_dim: 128
@@ -54,7 +58,7 @@ dropout: 0.1
 epochs: 20
 train_data_root: src/datasets/c1/ds/train
 val_data_root: src/datasets/c1/ds/test
-norm_stats_path: src/simplepredict/configs/norm_stats.yaml
+norm_stats_path: src/dlofeel_state/configs/norm_stats_k16.yaml
 seed: 42
 num_workers: 16
 

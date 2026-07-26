@@ -351,7 +351,7 @@ def train(
     train_data_root: str | None = None,
     val_data_root: str | None = None,
     blank_ref_root: str | None = None,
-    config_path: str = "configs/train/default.yaml",
+    config_path: str = "src/dlofeel_state/configs/default.yaml",
     normalize: bool | None = None,
     normalize_inputs: bool | None = None,
     norm_stats_path: str | None = None,
