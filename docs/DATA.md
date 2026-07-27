@@ -93,12 +93,14 @@ Artifacts land in `<dest>/dataset/` and `<dest>/weights/`. `--dest` defaults to
 `<repo_root>/data`, resolved from the git root, so it never depends on your
 working directory.
 
-> **The Hub repository IDs are placeholders.** `DATASET_REPO_ID` and
-> `WEIGHTS_REPO_ID` in [`scripts/download_data.py`](../scripts/download_data.py)
-> name repositories that do not exist yet; they are finalized when the packed
-> dataset and checkpoints are uploaded. Until then the script fails with a Hub
-> "repo not found" error. The interface (constants, CLI, and the two download
-> functions) is stable now so code and docs can wire against it in advance.
+> **Upload in progress.** The Hub repository IDs in
+> [`scripts/download_data.py`](../scripts/download_data.py) are final
+> (`RotemAtari/dlofeel-state-data`, `RotemAtari/dlofeel-state-weights`), but the
+> artifacts are still being uploaded. Until that completes the script fails with a
+> Hub "repo not found" error. This note is removed once both repositories are live.
+>
+> The released data is licensed **CC-BY-4.0**; the code in this repository is MIT
+> (see [`../LICENSE`](../LICENSE) and [`../NOTICE`](../NOTICE)).
 
 Nothing in this repository requires the download. The parity gate and the
 dataset smoke test run off the committed 8-frame sample (section 7), and the

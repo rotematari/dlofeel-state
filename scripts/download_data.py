@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Fetch DLOFeel-State artifacts (dataset + trained weights) from the Hugging Face Hub.
 
-PLACEHOLDER STUB. The repo IDs below name Hub repositories that do not exist
-yet; they are finalized when the packed dataset and checkpoints are uploaded.
-The interface (constants, CLI, and the two download functions) is stable now so
-downstream code and docs can wire against it before the artifacts land. Running
-it against the current placeholder IDs raises a Hub "repo not found" error.
+The repository IDs below are final. The artifacts are being uploaded; until that
+completes, these calls raise a Hub "repo not found" error. Nothing else in this
+repository depends on the download: the parity gate and the dataset smoke test
+run off the 8-frame sample committed under tests/fixtures/parity/.
 """
 
 import argparse
@@ -14,9 +13,8 @@ from pathlib import Path
 import rootutils
 from huggingface_hub import snapshot_download
 
-# Placeholder Hub repositories, finalized when artifacts are uploaded.
-DATASET_REPO_ID = "rotematari/dlofeel-state-data"
-WEIGHTS_REPO_ID = "rotematari/dlofeel-state-weights"
+DATASET_REPO_ID = "RotemAtari/dlofeel-state-data"
+WEIGHTS_REPO_ID = "RotemAtari/dlofeel-state-weights"
 
 # Repo-root-relative default so the destination is machine-independent.
 _ROOT = rootutils.find_root(search_from=__file__, indicator=".git")
