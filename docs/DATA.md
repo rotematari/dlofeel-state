@@ -54,21 +54,17 @@ trained and evaluated on; `c2` and `c3` are the transfer-learning cables.
 
 | Split | Sessions | Samples | Percentage |
 |-------|----------|---------|------------|
-| Train | 36 | 196,968 | 90.1% |
-| Test | 4 | 21,563 | 9.9% |
+| Train | 36 | 196,678 | 90.0% |
+| Test | 4 | 21,853 | 10.0% |
 | **Total** | **40** | **218,531** | **100%** |
 
-The full per-session breakdown is in [`data.md`](data.md) section 3; these
-totals are the sum of that table.
+These are the split sizes reported in the paper, and they are authoritative for
+this release. The full per-session breakdown is in [`data.md`](data.md) section 3.
 
-> **Note on sample counts.** The per-session totals above are derived from the
-> dataset itself. An earlier draft of the paper reports slightly different
-> totals (196,678 train / 21,853 test); the numbers here are authoritative for
-> this release. <!-- NEEDS-CONFIRM: Rotem to reconcile with the paper's Table/text before publishing -->
-
-The two accounts agree on the grand total (218,531) and on the session counts
-(36 train, 4 test); they differ only in where the split boundary falls, by
-exactly 290 samples.
+Note that the per-session inventory in [`data.md`](data.md) section 3 sums to
+196,968 train / 21,563 test. Both accounts give the same grand total (218,531)
+and the same session counts (36 train, 4 test); the split boundary used for the
+reported results places 290 further samples on the test side.
 
 For `c2` and `c3` the fine-tuning study used roughly 50,000 training and 14,000
 test samples per cable. Those figures are as reported in the paper and are not

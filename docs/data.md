@@ -64,6 +64,12 @@ Additional quality filters applied before saving:
 | Test | 4 | 21,563 | 9.9% |
 | **Total** | **40** | **218,531** | **100%** |
 
+These totals are the sum of the per-session tables below, i.e. the raw session
+inventory. The split sizes reported for the released results are 196,678 train /
+21,853 test: the same 218,531 samples and the same 36/4 session counts, with the
+split boundary placing 290 further samples on the test side. See
+[`DATA.md`](DATA.md) for the authoritative split figures.
+
 ### Train Sessions (36 total)
 
 | Session | Samples | Config |

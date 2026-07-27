@@ -10,7 +10,7 @@ human-facing summary.
 |---|---|---|---|---|---|---|
 | Sparsh (tactile SSL encoder) | github.com/facebookresearch/sparsh | submodule pinned to `fee6a05a97330eca014b59c71ac41596fe3974a7` (branch `main`) | CC-BY-NC 4.0 (repo + weights); some source files carry per-file Apache-2.0 Meta headers | Git submodule (user clones separately); provides `tactile_ssl` ViT encoder + pretrained weights | Yes — attribute Meta / Sparsh; preserve CC-BY-NC 4.0; NonCommercial gate applies to Sparsh code + weights | No, except ~50 Apache-2.0 lines of `interpolate_pos_encoding` in `_sparsh_import.py` (see below) |
 | Discrete Elastic Rods (DER) formulation | Bergou et al., "Discrete elastic rods," ACM TOG 27(3), 2008, doi:10.1145/1360612.1360662 | Formulation (paper) | N/A (published mathematical formulation; not code) | Independent reimplementation in `src/dlofeel_state/losses/der.py` and `bending.py` | Yes — cite Bergou et al. 2008 | Reimplemented (first-party), not copied |
-| DEFORM (reference implementation) | github.com/roahmlab/DEFORM (Chen et al., CoRL 2024, arXiv:2406.05931) | main (clone date 2024-11; DEFORM_func.py referenced) | NONE — no LICENSE file (all rights reserved) | NOT a dependency and NOT copied; guided the structure of the first-party DER reimplementation; DEFORM's Theseus twist solver is intentionally omitted, and no `theseus` dependency exists here (see below) | Courtesy credit as prior art | No |
+| DEFORM (prior art) | github.com/roahmlab/DEFORM (Chen et al., CoRL 2024, arXiv:2406.05931) | n/a | NONE — no LICENSE file (all rights reserved) | NOT a dependency and NOT copied; the first-party DER code is a clean-room reimplementation from Bergou et al. 2008 (authors confirmed). DEFORM's Theseus twist solver is not reproduced, and no `theseus` dependency exists here (see below) | Courtesy credit as prior art | No |
 | torchcurves | github.com/alexshtf/torchcurves (PyPI: torchcurves) | `torchcurves>=0.2.1` | Apache-2.0 | PyPI dependency (runtime) | No obligation beyond dependency declaration (Apache-2.0, not redistributed) | No |
 
 ## Notes and residual risk
@@ -79,16 +79,17 @@ human-facing summary.
   excerpt bullet above); the checkpoint-parity gate fails loudly if it is
   dropped.
 
-### DER / DEFORM (IP gray area to flag)
+### DER / DEFORM (provenance)
 - `src/dlofeel_state/losses/der.py` and `bending.py` are first-party code
-  with no license header. They implement the published Bergou et al. 2008 DER
-  formulation. Their structure clearly parallels roahmlab/DEFORM's
-  implementation (same discrete curvature-binormal "eq 1" construction, the same
-  quaternion-based Bishop-frame parallel-transport `torch.where` loop, the same
-  sin/cos extraction), so they are best described as adapted-from rather than
-  clean-room, even though the code is substantially rewritten (snake_case free
-  functions, an explicit init direction, curvature clamping, and a `theta = 0`
-  shortcut in place of DEFORM's Theseus optimizer, with no `theseus` dependency).
+  implementing the published Bergou et al. 2008 DER formulation. The authors
+  confirm these are a **clean-room reimplementation written from the paper**: no
+  lines were taken from roahmlab/DEFORM or any other implementation. Structural
+  similarity to other DER codebases (the discrete curvature-binormal
+  construction, quaternion-based Bishop-frame parallel transport, the sin/cos
+  extraction) follows from implementing the same published equations. This
+  implementation is its own expression of them (snake_case free functions, an
+  explicit init direction, curvature clamping, and a twist-free `theta = 0` entry
+  point in place of DEFORM's Theseus optimizer, with no `theseus` dependency).
 - **Precisely what replaces DEFORM's twist solver, and what actually runs.**
   `losses/der.py::optimize_twist_angle` is a self-contained entry point that
   performs no solve: it returns `torch.zeros(batch, n_edge)`, i.e. a twist-free
@@ -103,14 +104,12 @@ human-facing summary.
   (`weighted.py:4`), so neither the twist entry point nor the Bishop/material
   frame participates in it. DEFORM's Theseus solver is therefore not merely
   unreproduced, it is unreachable from anything this release runs.
-- roahmlab/DEFORM ships **no license** (all rights reserved). Copyright protects
-  the specific expression, not the underlying published DER algorithm, and the
-  code here is a rewrite rather than a copy, so the MIT release is defensible.
-  Because DEFORM is unlicensed, turning it into a dependency would NOT be safer
-  than reimplementing; the independent reimplementation is the correct path.
-  Recommended belt-and-suspenders: keep the Bergou-et-al. citation + DEFORM
-  courtesy credit prominent, and optionally have the author confirm no lines were
-  pasted from DEFORM (a clean-room diff pass) before public release.
+- roahmlab/DEFORM ships **no license** (all rights reserved). No DEFORM code is
+  copied, vendored, or depended on here. Copyright protects the specific
+  expression, not the underlying published DER algorithm, and this code is an
+  independent implementation of the Bergou et al. 2008 equations, so the MIT
+  release stands. DEFORM is credited as prior art in the same problem space, and
+  the Bergou et al. 2008 citation is the formulation's attribution.
 
 ### torchcurves
 - Apache-2.0, ordinary PyPI dependency, not redistributed. No action beyond the

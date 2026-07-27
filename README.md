@@ -28,6 +28,14 @@ elements, of which 5,327,367 carry gradients under the default freezing strategy
 (the Sparsh backbone is frozen except its last 2 blocks). The count is K-dependent,
 so a model trained at a different K will differ.
 
+The 61.5 ms is the latency reported in the paper, measured on an RTX 5090; the paper
+does not state the batch size behind it, so it is quoted here exactly as published.
+The released K = 16 run logs its own reproduced measurement: **64.20 ms at
+`batch_size=32`**, from the `log_model_info()` summary at the head of its
+`training_log.txt` (mean wall clock over 10 CUDA-synced forward passes after 3
+warmups, forward pass only, excluding data loading). Treat 61.5 ms as the citable
+figure and 64.20 ms as what this checkpoint's own training run recorded.
+
 The test split is whole held-out sessions, not a random frame split, so these numbers
 are on unseen cable configurations and trajectories.
 
@@ -94,16 +102,19 @@ Each directory holds the driver scripts for one paper artifact.
 | Table I: model comparison | `experiments/table1_model_comparison/` | Sparsh ViT, ResNet-18, pose-only (`run_model_comparison.sh`); w/o B-spline (`run_diff_bspline.sh`) |
 | Table II: sensor removal + runtime sensor faults | `experiments/table2_sensor_ablation/` | all |
 | Fig. 4: data efficiency vs. number of samples | `experiments/fig4_data_efficiency/` | all |
-| Fig. 5: transfer to unseen DLOs | `experiments/fig5_transfer/` | `c3` (2 mm steel) scratch + fine-tune (`run_c3_xblock.sh`); combined-model eval (`run_x2_combined_eval.sh`) |
+| Fig. 5: transfer to unseen DLOs | `experiments/fig5_transfer/` | `c3` (2 mm steel) scratch + fine-tune (`run_c3_xblock.sh`) |
 | Fig. 6: robustness to tactile-image noise | `experiments/fig6_noise/` | all |
 | Choice of K (vertex resampling) | `experiments/k_resample/` | all |
 
 Two Table-I arms are **model-supported but ship no driver**: the pose+direction variant
 (`--model_type direction`) and the w/o-physics-loss variant (`--use_weighted_loss`) are
 implemented in the package and reachable from the CLI, but no shell script in
-`experiments/` launches them. Likewise, Fig. 5 ships the `c3` transfer runs only; the
-`c2` (4.5 mm USB) fine-tuning driver is not included, and `run_x2_combined_eval.sh`
-evaluates a combined C1+C2+C3 checkpoint that no shipped script trains.
+`experiments/` launches them. Likewise, Fig. 5 ships the `c3` transfer runs only: the
+`c2` (4.5 mm USB) fine-tuning driver is not included, and the release ships no driver
+that trains or evaluates a combined C1+C2+C3 model. What does ship for the combined
+setting is `experiments/fig5_transfer/build_combined_union.py`, which only stages the
+c1+c2+c3 union directory that the cross-cable normalization pass
+(`experiments/k_resample/gen_cross_cable_stats.sh`) reads.
 
 The drivers `cd` to the repository root and use repo-root-relative dataset paths; the
 staging layout they expect is in [docs/DATA.md](docs/DATA.md).
