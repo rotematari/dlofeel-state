@@ -28,7 +28,7 @@ def _shipped_docs():
         *sorted((REPO / "docs").rglob("*.md")),
         *sorted((REPO / "experiments").rglob("*.md")),
     ]
-    for extra in ("CITATION.cff", "CONTRIBUTING.md"):
+    for extra in ("CITATION.cff",):
         p = REPO / extra
         if p.exists():
             files.append(p)

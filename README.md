@@ -159,6 +159,12 @@ git. The checkpoint-dependent gates (`test_parity.py`, `test_model_loads_ckpt.py
 `test_eval_cli.py`) skip cleanly when `DLOFEEL_PARITY_CKPT` is unset, since the
 137 MB checkpoint is not committed.
 
+One further test always skips on a public clone:
+`test_shim_reproduces_vendored_pos_encoding` compares the Sparsh import shim against
+the unpublished research tree the port was made from, so no checkpoint turns it on.
+That is the expected state, not a setup error; its companion
+`test_sparsh_builders_import` does run and covers the shim's import surface.
+
 ## Citation
 
 If you use this code, please cite the paper:

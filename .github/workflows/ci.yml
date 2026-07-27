@@ -36,7 +36,7 @@ jobs:
           cache-dependency-glob: pyproject.toml
 
       - name: Install the package and the dev tooling
-        # The first three commands are CONTRIBUTING.md section 1. The fourth pins the
+        # Install the package and dev tooling. The last command pins the
         # linter: the per-file-ignores baseline in pyproject.toml is calibrated against
         # ruff 0.16.0, and a newer release that reports a code the baseline does not
         # list would turn the lint step red on a repository nobody changed. Bump this
@@ -50,7 +50,7 @@ jobs:
           uv pip install "ruff==0.16.0"
 
       - name: Put the venv on PATH
-        # So the two steps below run the commands CONTRIBUTING.md documents, verbatim.
+        # So the two steps below run the documented commands verbatim.
         run: echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Lint
