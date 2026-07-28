@@ -4,7 +4,8 @@ Optimized dataset packing script for DLOPredict v2.
 
 Key features:
 - Pre-processes data: transforms to fixed frame, resamples spline
-- Uses LZ4 compression for images
+- Compresses images with gzip by default (built into HDF5, so packed files are
+  readable anywhere); optional LZ4 via --compression lz4 needs the hdf5plugin package
 - Two-pass approach: scan for stats, then pack
 - Computes and stores normalization stats in dataset config YAML
 - Compatible with dataset_seq.py expected format
@@ -29,10 +30,9 @@ from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 try:
-    import hdf5plugin  # Registers LZ4 filter
+    import hdf5plugin  # Registers the LZ4 filter, only needed for --compression lz4
 except ImportError:
     hdf5plugin = None
-    print("Warning: hdf5plugin not available, using gzip compression instead")
 
 import h5py
 import numpy as np
@@ -218,7 +218,8 @@ def pack_dataset(source_root: str,
                  output_path: str,
                  num_resample_points: int = 32,
                  spline_degree: int = 3,
-                 num_workers: int = 8):
+                 num_workers: int = 8,
+                 compression: str = "gzip"):
     """
     Pack dataset with pre-processed individual samples (compatible with dataset_seq.py).
 
@@ -289,11 +290,21 @@ def pack_dataset(source_root: str,
 
     total_processed = 0
 
-    # Compression kwargs
-    if hdf5plugin is not None:
+    # Compression. gzip is the default because it ships inside HDF5: a packed file
+    # then opens with a plain h5py install. LZ4 decompresses faster but writes the
+    # 32004 filter, so reading it REQUIRES the hdf5plugin package; on real DIGIT
+    # images it also compresses far worse (measured 1.07x vs gzip's 1.61x).
+    if compression == "lz4":
+        if hdf5plugin is None:
+            raise RuntimeError(
+                "--compression lz4 needs the hdf5plugin package (pip install hdf5plugin). "
+                "Note that readers of the resulting file need it too."
+            )
         compression_kwargs = hdf5plugin.LZ4()
-    else:
+    elif compression == "gzip":
         compression_kwargs = {'compression': 'gzip', 'compression_opts': 4}
+    else:
+        raise ValueError(f"unknown compression {compression!r}; use 'gzip' or 'lz4'")
 
     with h5py.File(output_path, "w") as f_out:
         # Create datasets - individual samples [N, ...]
@@ -538,6 +549,11 @@ if __name__ == "__main__":
                         help="Number of resampled marker points")
     parser.add_argument("--spline_degree", type=int, default=3,
                         help="B-spline degree")
+    parser.add_argument("--compression", type=str, default="gzip",
+                        choices=["gzip", "lz4"],
+                        help="Image compression. gzip (default) is built into HDF5 so the "
+                             "packed file opens anywhere; lz4 is faster to read but needs "
+                             "the hdf5plugin package at BOTH write and read time.")
     parser.add_argument("--num_workers", type=int, default=8,
                         help="Number of parallel workers for processing")
 
@@ -562,7 +578,8 @@ if __name__ == "__main__":
         args.src_train, str(out_train),
         num_resample_points=args.num_points,
         spline_degree=args.spline_degree,
-        num_workers=args.num_workers
+        num_workers=args.num_workers,
+        compression=args.compression,
     )
 
     # Pack test
@@ -571,7 +588,8 @@ if __name__ == "__main__":
         args.src_test, str(out_test),
         num_resample_points=args.num_points,
         spline_degree=args.spline_degree,
-        num_workers=args.num_workers
+        num_workers=args.num_workers,
+        compression=args.compression,
     )
 
     print("\nDone!")
