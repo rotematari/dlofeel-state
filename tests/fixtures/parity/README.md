@@ -40,7 +40,7 @@ the config sitting next to `best.pt`; there is no `--config_path` /
 normalize, normalize_inputs) come from that config.
 
 ```bash
-ORIG=/home/rotem/Documents/Claude/Projects/PHD/03_projects/dlopredict/repo
+ORIG=/home/rotem/Documents/Claude/Projects/PHD/03_projects/dlopredict/dlopredict
 NEW=/home/rotem/Documents/Claude/Projects/PHD/03_projects/dlopredict/dlofeel-state
 cd "$ORIG"
 export PYTHONPATH="src:${PYTHONPATH:-}"
